@@ -22,7 +22,7 @@
             margin-bottom: 30px;
             text-align: center;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            min-height: 100px; /* Para asegurar que el contenedor es visible */
+            min-height: 100px; 
         }
 
         /* Título */
@@ -79,7 +79,7 @@
             background-color: #ccffcc; 
         }
 
-        /* Estilo para el Pop-up de Feedback (NUEVO) */
+        /* Estilo para el Pop-up de Feedback */
         #feedback-popup {
             position: fixed;
             top: 50%;
@@ -102,7 +102,7 @@
 <body>
 
     <div id="contenedor-palabras">
-        <h3>Arrastra cada palabra a su categoría (¡Solo 6 por grupo!):</h3>
+        <h3>Arrastra cada palabra a su categoría:</h3>
     </div>
 
     <div class="contenedor-cajas">
@@ -123,17 +123,17 @@
     </div>
 
     <script>
-        // --- 1. CONFIGURACIÓN DEL JUEGO (6 palabras temáticas) ---
+        // --- 1. CONFIGURACIÓN DEL JUEGO (¡CON SUS NUEVAS PALABRAS!) ---
         const palabras = {
-            propios: ["Juan", "María", "Sol", "Luna", "Chile", "Abril"],
-            comunes: ["Gato", "Casa", "Flor", "Mano", "Comida", "Zapatos"],
-            noSustantivos: ["Saltar", "Feliz", "Beber", "Alto", "Canta", "Lento"]
+            propios: ["Lauren", "Dilan", "Mexico", "Texas", "McDonalds", "FoodTown"],
+            comunes: ["libro", "mesa", "camisa", "silla", "rana", "pato"],
+            noSustantivos: ["salta", "poco", "come", "grande", "risa", "La"]
         };
         
         let elementoArrastrado = null; 
-        let popup = null; // Variable global para el pop-up
+        let popup = null; 
 
-        // --- 2. FUNCIÓN PARA MOSTRAR EL POP-UP (NUEVO) ---
+        // --- 2. FUNCIÓN PARA MOSTRAR EL POP-UP ---
         function crearPopup() {
             popup = document.createElement('div');
             popup.id = 'feedback-popup';
@@ -165,8 +165,7 @@
         }
 
         function dragEnd(ev) {
-            // Esta función se activará en arrastre con ratón, pero la lógica de estilos está en manejarDrop/touchend
-            // Se mantiene por si se usa en desktop
+            // Se mantiene el evento dragEnd para la compatibilidad con ratón
         }
 
         function allowDrop(ev) {
@@ -179,7 +178,7 @@
             const palabraTipo = draggedElement.getAttribute('data-tipo');
             const contenedorInicial = document.getElementById('contenedor-palabras');
             
-            // Restaurar estilos base al soltar (antes de la re-ubicación)
+            // 1. Restaurar estilos de arrastre
             draggedElement.style.transform = 'scale(1.0)';
             draggedElement.style.opacity = '1.0';
             draggedElement.style.position = 'static'; 
@@ -209,7 +208,6 @@
             const destinoCaja = ev.target.classList.contains('caja-destino') ? ev.target : ev.target.closest('.caja-destino');
             
             if (!destinoCaja || !draggedElement) {
-                 // Si se soltó fuera en desktop, simplemente restaurar
                  if (draggedElement) {
                     draggedElement.style.backgroundColor = '#f7f7f7';
                     draggedElement.style.transform = 'scale(1.0)';
@@ -221,7 +219,7 @@
             manejarDrop(draggedElement, destinoCaja);
         }
 
-        // --- 4. FUNCIONES TÁCTILES PARA IPAD (CRUCIALES) ---
+        // --- 4. FUNCIONES TÁCTILES PARA IPAD ---
         
         function touchstart(ev) {
             const target = ev.target;
@@ -257,20 +255,18 @@
             ev.preventDefault();
 
             const touch = ev.changedTouches[0];
-            // Elemento debajo del dedo
             const destino = document.elementFromPoint(touch.clientX, touch.clientY);
             
             let destinoCaja = destino;
-            // Buscar si el destino es una caja destino válida
             while (destinoCaja && !destinoCaja.classList.contains('caja-destino')) {
                 destinoCaja = destinoCaja.parentElement;
             }
 
             if (destinoCaja && destinoCaja.classList.contains('caja-destino')) {
-                // Soltado en una caja destino -> Manejar Correcto/Incorrecto
+                // Soltado en una caja destino
                 manejarDrop(elementoArrastrado, destinoCaja);
             } else {
-                // Soltado fuera de cualquier caja destino -> Error y Regreso
+                // Soltado fuera de cualquier caja destino
                 const contenedorInicial = document.getElementById('contenedor-palabras');
                 
                 // Muestra error visual, regresa al inicio, y restaura estilos
@@ -317,14 +313,14 @@
                 p.id = `palabra-${index}`;
                 p.className = 'palabra-draggable';
                 p.draggable = true;
-                p.setAttribute('data-tipo', palabra.tipo);
+                // El atributo data-tipo ahora usa sus palabras y es la clave para la evaluación
+                p.setAttribute('data-tipo', tipo); 
                 p.setAttribute('ondragstart', 'drag(event)');
                 p.setAttribute('ondragend', 'dragEnd(event)');
                 contenedorPalabras.appendChild(p);
             });
             
             prepararEventosTactiles();
-            // Crear el pop-up al inicio
             crearPopup();
         }
 
