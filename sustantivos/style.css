@@ -81,7 +81,7 @@ main {
     margin-bottom: 15px;
     font-size: 1.2em;
     color: #4CAF50;
-    /* CRÍTICO PARA DETECCIÓN EN TOUCH: Ignora el texto del encabezado en la detección del toque */
+    /* CRÍTICO PARA DETECCIÓN EN TOUCH: Ignora el texto del encabezado */
     pointer-events: none; 
 }
 
@@ -91,7 +91,7 @@ main {
     cursor: default;
     background-color: #e0f7e9; /* Un verde muy claro */
     color: #2e7d32;
-    opacity: 1; /* Asegura que la palabra colocada sea visible */
+    opacity: 1; 
 }
 
 /* Estilo para las palabras que ya están colocadas */
