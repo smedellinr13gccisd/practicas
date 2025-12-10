@@ -8,25 +8,37 @@
 </head>
 <body>
 
-    <h1>Clasificación de Palabras</h1>
-    
-    <div id="word-bank" class="bank-container">
-        <h2>Banco de Palabras</h2>
-        </div>
+    <header>
+        <h1>Clasificación de Sustantivos</h1>
+    </header>
 
-    <div id="drop-zones-container">
-        <div id="propio" class="drop-zone" data-category="propio">
-            <h3>Sustantivos Propios</h3>
-        </div>
-        <div id="comun" class="drop-zone" data-category="comun">
-            <h3>Sustantivos Comunes</h3>
-        </div>
-        <div id="no-sustantivo" class="drop-zone" data-category="no-sustantivo">
-            <h3>No Sustantivos</h3>
-        </div>
-    </div>
+    <main>
+        
+        <div id="feedback-message" class="feedback"></div>
 
-    <div id="feedback-message" class="feedback"></div>
+        <section id="word-bank-container">
+            <h2>Arrastra cada palabra a su categoría</h2>
+            <div id="word-bank">
+                </div>
+        </section>
+
+        <section id="drop-zones-container">
+
+            <div class="drop-zone" data-category="propio">
+                <h3>Sustantivos Propios</h3>
+            </div>
+
+            <div class="drop-zone" data-category="comun">
+                <h3>Sustantivos Comunes</h3>
+            </div>
+
+            <div class="drop-zone" data-category="no-sustantivo">
+                <h3>No Sustantivos</h3>
+            </div>
+
+        </section>
+
+    </main>
 
     <script src="script.js"></script>
 </body>
