@@ -46,17 +46,17 @@ function showFeedback(isCorrect, message) {
 function handleWordSelection(event) {
     const targetWord = event.target;
     
-    // Si ya está en una zona de soltar y es correcta, no hacemos nada (o podríamos permitir que la saquen si lo deseas)
+    // Si la palabra ya está en una zona de soltar y es correcta, no hacemos nada
     if (targetWord.classList.contains('correct')) {
         return; 
     }
 
-    // Deseleccionar la palabra que estaba activa
+    // 1. Deseleccionar la palabra que estaba activa (si existe)
     if (selectedWord) {
         selectedWord.classList.remove('selected');
     }
 
-    // Seleccionar la nueva palabra
+    // 2. Seleccionar la nueva palabra
     if (selectedWord !== targetWord) {
         selectedWord = targetWord;
         selectedWord.classList.add('selected');
@@ -68,6 +68,7 @@ function handleWordSelection(event) {
 
 // 5. Lógica de Tocar para Colocar (Zonas de Soltar)
 function handleZonePlacement(event) {
+    // Si no hay palabra seleccionada, salir
     if (!selectedWord) {
         showFeedback(false, '¡Selecciona una palabra primero!');
         return;
@@ -97,14 +98,13 @@ function handleZonePlacement(event) {
 
 // 6. Inicialización de la Aplicación
 function initializeApp() {
-    // A. Crea e inicializa las palabras
+    // A. Crea e inicializa las palabras en el banco
     allWords.forEach(function(word) {
         const wordDiv = document.createElement('div');
-        wordDiv.textContent = word.text;
-        // Cambiamos la clase a 'selectable-word'
+        wordDiv.textContent = word.text; 
         wordDiv.className = 'selectable-word'; 
         wordDiv.dataset.category = word.category;
-        wordBank.appendChild(wordDiv);
+        wordBank.appendChild(wordDiv); // ¡Añadiendo al banco!
     });
 
     // B. Añade los listeners de eventos
@@ -124,11 +124,11 @@ function initializeApp() {
     // Listener para REUBICAR (Si el estudiante toca una palabra colocada)
     dropZones.forEach(function(zone) {
         zone.addEventListener('click', function(e) {
-            // Si tocamos una palabra colocada, la seleccionamos para reubicarla.
-            if (e.target.classList.contains('selectable-word') && !e.target.classList.contains('selected')) {
-                // Primero, movemos la palabra de vuelta al banco para que el estudiante pueda reubicarla
+            // Si el clic fue en una palabra y no en la zona vacía...
+            if (e.target.classList.contains('selectable-word')) {
+                // Primero, movemos la palabra de vuelta al banco
                 returnToBank(e.target);
-                // Luego la seleccionamos
+                // Luego la seleccionamos para que pueda ser colocada de nuevo
                 handleWordSelection(e);
             }
         });
