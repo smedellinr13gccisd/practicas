@@ -1,17 +1,28 @@
-// 1. Datos de la Práctica
+// 1. Datos de la Práctica (¡ACTUALIZADO CON TU LISTA!)
 const allWords = [
-    { text: "María", category: "propio" },
-    { text: "Perro", category: "comun" },
-    { text: "Correr", category: "no-sustantivo" },
-    { text: "Mesa", category: "comun" },
-    { text: "Londres", category: "propio" },
-    { text: "Feliz", category: "no-sustantivo" },
-    { text: "Juan", category: "propio" },
-    { text: "Árbol", category: "comun" },
-    { text: "Rápido", category: "no-sustantivo" },
-    { text: "España", category: "propio" },
-    { text: "Silla", category: "comun" },
-    { text: "Comer", category: "no-sustantivo" },
+    // SUSTANTIVOS PROPIOS (category: "propio")
+    { text: "Maria", category: "propio" },
+    { text: "Carlos", category: "propio" },
+    { text: "Walmart", category: "propio" },
+    { text: "Mexico", category: "propio" },
+    { text: "Texas", category: "propio" },
+    { text: "Ale", category: "propio" },
+    
+    // SUSTANTIVOS COMUNES (category: "comun")
+    { text: "casa", category: "comun" },
+    { text: "fruta", category: "comun" },
+    { text: "silla", category: "comun" },
+    { text: "libro", category: "comun" },
+    { text: "gato", category: "comun" },
+    { text: "niño", category: "comun" },
+    
+    // NO SUSTANTIVOS (category: "no-sustantivo")
+    { text: "rie", category: "no-sustantivo" },
+    { text: "sube", category: "no-sustantivo" },
+    { text: "camina", category: "no-sustantivo" },
+    { text: "ladra", category: "no-sustantivo" },
+    { text: "escribe", category: "no-sustantivo" },
+    { text: "lee", category: "no-sustantivo" },
 ];
 
 // 2. Referencias del DOM
