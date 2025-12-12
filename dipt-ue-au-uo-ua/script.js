@@ -1,52 +1,63 @@
-// 1. Datos de la Práctica (Ampliado para tener más opciones al reiniciar)
+// 1. Datos de la Práctica (Ampliado para tener dos bloques distintos)
+// Las palabras se dividen en dos grupos: BLOQUE 1 y BLOQUE 2.
 const allWords = [
-    // Diptongo UE (category: "ue") - 10 palabras
-    { text: "fuego", category: "ue" },
-    { text: "rueda", category: "ue" },
-    { text: "cuerpo", category: "ue" },
-    { text: "nuevo", category: "ue" },
-    { text: "suelo", category: "ue" },
-    { text: "hueso", category: "ue" },
-    { text: "cueva", category: "ue" },
-    { text: "trueno", category: "ue" },
-    { text: "cuerda", category: "ue" },
-    { text: "abuelo", category: "ue" },
+    // --- BLOQUE 1 (Palabras iniciales) ---
+    // Diptongo UE (category: "ue") - 5 palabras
+    { text: "fuego", category: "ue", block: 1 },
+    { text: "rueda", category: "ue", block: 1 },
+    { text: "cuerpo", category: "ue", block: 1 },
+    { text: "nuevo", category: "ue", block: 1 },
+    { text: "suelo", category: "ue", block: 1 },
     
-    // Diptongo AU (category: "au") - 10 palabras
-    { text: "pausa", category: "au" },
-    { text: "jaula", category: "au" },
-    { text: "auto", category: "au" },
-    { text: "causa", category: "au" },
-    { text: "fraude", category: "au" },
-    { text: "fauna", category: "au" },
-    { text: "aula", category: "au" },
-    { text: "laucha", category: "au" },
-    { text: "audio", category: "au" },
-    { text: "austero", category: "au" },
+    // Diptongo AU (category: "au") - 5 palabras
+    { text: "pausa", category: "au", block: 1 },
+    { text: "jaula", category: "au", block: 1 },
+    { text: "auto", category: "au", block: 1 },
+    { text: "causa", category: "au", block: 1 },
+    { text: "fraude", category: "au", block: 1 },
     
-    // Diptongo UO (category: "uo") - 10 palabras
-    { text: "cuota", category: "uo" },
-    { text: "residuo", category: "uo" },
-    { text: "mutuo", category: "uo" },
-    { text: "actúo", category: "uo" },
-    { text: "arduoso", category: "uo" },
-    { text: "continuo", category: "uo" },
-    { text: "ambiguo", category: "uo" },
-    { text: "acuoso", category: "uo" },
-    { text: "evacuo", category: "uo" },
-    { text: "individuo", category: "uo" },
+    // Diptongo UO (category: "uo") - 5 palabras
+    { text: "cuota", category: "uo", block: 1 },
+    { text: "residuo", category: "uo", block: 1 },
+    { text: "mutuo", category: "uo", block: 1 },
+    { text: "actúo", category: "uo", block: 1 },
+    { text: "arduoso", category: "uo", block: 1 },
     
-    // Diptongo UA (category: "ua") - 10 palabras
-    { text: "agua", category: "ua" },
-    { text: "guardar", category: "ua" },
-    { text: "cuatro", category: "ua" },
-    { text: "lengua", category: "ua" },
-    { text: "guapo", category: "ua" },
-    { text: "suave", category: "ua" },
-    { text: "iguana", category: "ua" },
-    { text: "paraguas", category: "ua" },
-    { text: "recua", category: "ua" },
-    { text: "estatua", category: "ua" },
+    // Diptongo UA (category: "ua") - 5 palabras
+    { text: "agua", category: "ua", block: 1 },
+    { text: "guardar", category: "ua", block: 1 },
+    { text: "cuatro", category: "ua", block: 1 },
+    { text: "lengua", category: "ua", block: 1 },
+    { text: "guapo", category: "ua", block: 1 },
+    
+    // --- BLOQUE 2 (Palabras para el segundo intento) ---
+    // Diptongo UE (category: "ue") - 5 palabras
+    { text: "hueso", category: "ue", block: 2 },
+    { text: "cueva", category: "ue", block: 2 },
+    { text: "trueno", category: "ue", block: 2 },
+    { text: "cuerda", category: "ue", block: 2 },
+    { text: "abuelo", category: "ue", block: 2 },
+
+    // Diptongo AU (category: "au") - 5 palabras
+    { text: "fauna", category: "au", block: 2 },
+    { text: "aula", category: "au", block: 2 },
+    { text: "laucha", category: "au", block: 2 },
+    { text: "audio", category: "au", block: 2 },
+    { text: "austero", category: "au", block: 2 },
+
+    // Diptongo UO (category: "uo") - 5 palabras
+    { text: "continuo", category: "uo", block: 2 },
+    { text: "ambiguo", category: "uo", block: 2 },
+    { text: "acuoso", category: "uo", block: 2 },
+    { text: "evacuo", category: "uo", block: 2 },
+    { text: "individuo", category: "uo", block: 2 },
+    
+    // Diptongo UA (category: "ua") - 5 palabras
+    { text: "suave", category: "ua", block: 2 },
+    { text: "iguana", category: "ua", block: 2 },
+    { text: "paraguas", category: "ua", block: 2 },
+    { text: "recua", category: "ua", block: 2 },
+    { text: "estatua", category: "ua", block: 2 },
 ];
 
 // 2. Referencias del DOM y Variables de Estado
@@ -56,8 +67,12 @@ const feedbackMessage = document.getElementById('feedback-message');
 const errorCountDisplay = document.getElementById('error-count');
 
 let selectedWord = null;
-let errorCount = 0;
-const wordsPerRound = 20; // Número fijo de palabras a mostrar en cada intento (5 por categoría)
+let errorCount = 0; // Contador acumulativo
+let currentBlock = 1; // Controla qué bloque de palabras estamos cargando
+const totalBlocks = 2; // El ejercicio tiene 2 bloques
+
+// El número de palabras que deben estar colocadas para terminar la ronda
+const wordsPerBlock = 20; 
 
 // 3. Funciones de Feedback y Conteo de Errores
 function updateErrorCount(isCorrect) {
@@ -68,7 +83,6 @@ function updateErrorCount(isCorrect) {
 }
 
 function showFeedback(isCorrect, message) {
-    // Si ya estamos mostrando el mensaje final, no mostrar feedback individual
     if (feedbackMessage.classList.contains('final-message')) return; 
 
     feedbackMessage.textContent = message;
@@ -80,15 +94,11 @@ function showFeedback(isCorrect, message) {
 }
 
 function showFinalMessage() {
-    // ESTILO MORADO para el mensaje final
+    // Se muestra el total de errores acumulados
     feedbackMessage.style.backgroundColor = '#673ab7'; 
-    feedbackMessage.textContent = `¡Felicidades! Errores totales en este intento: ${errorCount}. Llévalo a tu maestro.`;
+    feedbackMessage.textContent = `¡Práctica Terminada! Errores totales (Bloque 1 y 2): ${errorCount}. Llévalo a tu maestro para revisión.`;
     feedbackMessage.classList.add('show', 'final-message');
-    
-    // El mensaje se queda fijo. Reinicio automático después de 5 segundos.
-    setTimeout(resetPractice, 5000); 
 }
-
 
 // 4. Lógica de Tocar para Seleccionar
 function handleWordSelection(event) {
@@ -123,7 +133,7 @@ function handleZonePlacement(event) {
     
     const isCorrect = wordCategory === zoneCategory;
 
-    // 1. Contador de Errores
+    // 1. Contador de Errores (Acumulativo)
     updateErrorCount(isCorrect); 
 
     // 2. Mover el elemento y aplicar feedback visual
@@ -145,85 +155,89 @@ function handleZonePlacement(event) {
 }
 
 
-// 7. Verificación y Reinicio
+// 6. Control de Flujo (Completar Bloque y Reiniciar)
 function checkCompletion() {
-    // Contar solo las palabras que inicialmente se crearon en esta ronda
-    const totalWords = wordsPerRound; 
     let placedWords = 0;
 
     dropZones.forEach(zone => {
+        // Contamos solo las palabras activas en la ronda actual
         placedWords += zone.querySelectorAll('.selectable-word').length;
     });
 
-    if (placedWords === totalWords) {
-        // Todas las palabras han sido colocadas
-        showFinalMessage();
+    if (placedWords === wordsPerBlock) {
+        // El bloque actual ha terminado
+        
+        if (currentBlock < totalBlocks) {
+            // Si es el Bloque 1, preparamos el Bloque 2
+            currentBlock++;
+            showFeedback(true, '¡Bloque 1 Completado! Cargando nuevas palabras...');
+            
+            // Pausa y luego limpiar e inicializar el Bloque 2
+            setTimeout(loadNextBlock, 2000); 
+            
+        } else {
+            // Es el Bloque 2 (Fin de la práctica)
+            showFinalMessage();
+            // Deshabilitar más interacción después del mensaje final
+            wordBank.style.pointerEvents = 'none';
+        }
     }
 }
 
-function resetPractice() {
-    // 1. Limpiar todas las palabras de las cajas y el banco
+function loadNextBlock() {
+    // 1. Limpiar todas las palabras de las cajas para el nuevo bloque
     dropZones.forEach(zone => {
         zone.innerHTML = zone.querySelector('h3').outerHTML; // Solo mantiene el título <h3>
     });
+    
+    // 2. Limpiar el banco de palabras
     wordBank.innerHTML = '';
     
-    // 2. Resetear contador de errores
-    errorCount = 0;
-    errorCountDisplay.textContent = '0';
-    
-    // 3. Resetear estilos del feedback
-    feedbackMessage.classList.remove('show', 'final-message');
-    feedbackMessage.style.backgroundColor = '';
-    feedbackMessage.textContent = '';
-
-
-    // 4. Inicializar el juego con nuevas palabras
-    initializeApp();
+    // 3. Cargar el siguiente bloque de palabras
+    initializeWordElements();
 }
 
 // Función auxiliar para mover una palabra al banco y limpiar su estado (usada al reubicar)
 function returnToBank(element) {
-    // Limpia los estados de color y selección
     element.classList.remove('correct', 'incorrect', 'selected');
-    // Mueve al banco
     wordBank.appendChild(element); 
-    // Al regresar, si había un mensaje final, lo ocultamos
     feedbackMessage.classList.remove('show', 'final-message');
     feedbackMessage.style.backgroundColor = '';
+    wordBank.style.pointerEvents = 'auto'; // Habilitar si se había desactivado
 }
 
-
-// 6. Inicialización de la Aplicación
-function initializeApp() {
+// 7. Inicialización de Palabras (Separado para el reinicio de bloques)
+function initializeWordElements() {
     
-    // 1. Seleccionar un subconjunto de palabras para la nueva ronda (5 por categoría, 20 en total)
-    const categoryMap = { 'ue': [], 'au': [], 'uo': [], 'ua': [] };
-    allWords.forEach(word => categoryMap[word.category].push(word));
-
-    let currentWords = [];
-    const wordsPerCategory = wordsPerRound / 4; 
-
-    for (const key in categoryMap) {
-        // Barajamos y tomamos el número exacto de palabras
-        categoryMap[key].sort(() => Math.random() - 0.5);
-        currentWords = currentWords.concat(categoryMap[key].slice(0, wordsPerCategory));
-    }
+    // Filtrar las palabras solo para el bloque actual
+    const blockWords = allWords.filter(word => word.block === currentBlock);
     
-    // 2. Barajar la lista final antes de inyectar
-    currentWords.sort(() => Math.random() - 0.5);
+    // 1. Barajar
+    blockWords.sort(() => Math.random() - 0.5);
     
-    // 3. Crear los elementos HTML
-    currentWords.forEach(function(word) {
+    // 2. Crear los elementos HTML
+    blockWords.forEach(function(word) {
         const wordDiv = document.createElement('div');
         wordDiv.textContent = word.text; 
         wordDiv.className = 'selectable-word'; 
         wordDiv.dataset.category = word.category;
         wordBank.appendChild(wordDiv); 
     });
+}
 
-    // 4. Configurar Eventos (Solo se configuran una vez en la carga inicial)
-    // Usamos una variable auxiliar para asegurar que solo se añadan los listeners la primera vez
+
+// 8. Inicialización de la Aplicación (Setup Inicial)
+function initializeApp() {
+    // Configuración inicial del Bloque 1
+    currentBlock = 1; 
+    errorCount = 0;
+    errorCountDisplay.textContent = '0';
+    wordBank.innerHTML = '';
+    
+    // Cargar las palabras del primer bloque
+    initializeWordElements();
+
+    // Configurar Eventos (Solo se configuran una vez en la carga inicial)
     if (!wordBank.hasAttribute('data-listeners-added')) {
          
         wordBank.addEventListener('click', function(e) {
@@ -242,7 +256,6 @@ function initializeApp() {
                 if (e.target.classList.contains('selectable-word')) {
                     if (!selectedWord) {
                          returnToBank(e.target);
-                         // Ahora la palabra está de nuevo en el banco, la seleccionamos
                          handleWordSelection(e);
                     }
                 }
