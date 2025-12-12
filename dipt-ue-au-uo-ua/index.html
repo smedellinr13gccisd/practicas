@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clasificación de Diptongos II</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Clasificación de Diptongos (UE, AU, UO, UA)</h1>
+    </header>
+
+    <main>
+        
+        <div id="error-display">
+            Errores: <span id="error-count">0</span>
+        </div>
+        
+        <div id="feedback-message" class="feedback"></div>
+
+        <section id="word-bank-container">
+            <h2>Toca la palabra y luego toca la caja del diptongo correcto.</h2>
+            <div id="word-bank">
+                </div>
+        </section>
+
+        <section id="drop-zones-container">
+
+            <div class="drop-zone" data-category="ue">
+                <h3>Diptongo UE</h3>
+            </div>
+
+            <div class="drop-zone" data-category="au">
+                <h3>Diptongo AU</h3>
+            </div>
+
+            <div class="drop-zone" data-category="uo">
+                <h3>Diptongo UO</h3>
+            </div>
+            
+             <div class="drop-zone" data-category="ua">
+                <h3>Diptongo UA</h3>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
