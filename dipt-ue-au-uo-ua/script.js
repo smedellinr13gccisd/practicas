@@ -65,7 +65,7 @@ const dropZones = document.querySelectorAll('.drop-zone');
 const feedbackMessage = document.getElementById('feedback-message');
 const errorCountDisplay = document.getElementById('error-count');
 
-let selectedWord = null; // ¡CRÍTICO!: Referencia al elemento DIV seleccionado.
+let selectedWord = null; 
 let errorCount = 0; 
 let currentBlock = 1;
 const totalBlocks = 2; 
@@ -95,8 +95,8 @@ function showFinalMessage() {
     feedbackMessage.textContent = `¡Práctica Terminada! Errores totales (Bloque 1 y 2): ${errorCount}. Llévalo a tu maestro para revisión. (Toca aquí para Reiniciar)`;
     feedbackMessage.classList.add('show', 'final-message');
     
-    // Pausar la interacción del banco de palabras
     wordBank.style.pointerEvents = 'none';
+    dropZones.forEach(zone => zone.style.pointerEvents = 'none'); // Deshabilitar zonas también
 }
 
 
@@ -108,17 +108,14 @@ function handleWordSelection(event) {
         return; 
     }
 
-    // Deseleccionar la palabra que estaba activa
     if (selectedWord) {
         selectedWord.classList.remove('selected');
     }
 
-    // Seleccionar la nueva palabra
     if (selectedWord !== targetWord) {
         selectedWord = targetWord;
         selectedWord.classList.add('selected');
     } else {
-        // Si toca la misma palabra dos veces, la deseleccionamos
         selectedWord = null;
     }
 }
@@ -126,14 +123,19 @@ function handleWordSelection(event) {
 
 // 5. Lógica de Tocar para Colocar (Zonas de Soltar)
 function handleZonePlacement(event) {
-    // CORRECCIÓN CLAVE: Verificar selectedWord antes de nada
+    // Si el clic fue en una palabra ya colocada, salimos para que lo maneje el reubicador.
+    if (event.target.classList.contains('selectable-word')) {
+        return; 
+    }
+
+    // Si el clic fue en el título H3 o un elemento interno (propagación), usamos currentTarget (la zona).
+    const targetZone = event.currentTarget; 
+
+    // CRÍTICO: Comprobación de que una palabra esté activa.
     if (!selectedWord) {
         showFeedback(false, '¡Selecciona una palabra primero!');
         return;
     }
-
-    // Se asegura de que el objetivo sea la zona de soltar (y no un elemento dentro)
-    const targetZone = event.currentTarget; 
     
     const wordCategory = selectedWord.dataset.category;
     const zoneCategory = targetZone.dataset.category;
@@ -152,10 +154,9 @@ function handleZonePlacement(event) {
     // 3. Mostrar el mensaje
     showFeedback(isCorrect, isCorrect ? '¡Correcto!' : '¡Incorrecto! Intenta otra caja.');
 
-    // 4. Resetear la palabra seleccionada SOLO después de haberla colocado
     selectedWord = null;
 
-    // 5. Verificar si la práctica ha terminado
+    // 4. Verificar si la práctica ha terminado
     checkCompletion();
 }
 
@@ -169,13 +170,9 @@ function checkCompletion() {
     });
 
     if (placedWords === wordsPerBlock) {
-        // El bloque actual ha terminado
-        
         if (currentBlock < totalBlocks) {
-            // TRANSICIÓN: Bloque 1 -> Bloque 2
             currentBlock++;
             showFeedback(true, '¡Bloque 1 Completado! Cargando nuevas palabras...');
-            
             setTimeout(loadNextBlock, 2000); 
             
         } else {
@@ -186,15 +183,15 @@ function checkCompletion() {
 }
 
 function loadNextBlock() {
-    // 1. Limpiar todas las palabras de las cajas para el nuevo bloque
+    // 1. Limpiar HTML de las cajas
     dropZones.forEach(zone => {
         zone.innerHTML = zone.querySelector('h3').outerHTML; 
     });
     
-    // 2. Limpiar el banco de palabras
+    // 2. Limpiar el banco
     wordBank.innerHTML = '';
     
-    // 3. Cargar el siguiente bloque de palabras
+    // 3. Cargar el siguiente bloque
     initializeWordElements();
 }
 
@@ -214,6 +211,9 @@ function resetTotalPractice() {
     feedbackMessage.classList.remove('show', 'final-message');
     feedbackMessage.style.backgroundColor = '';
     feedbackMessage.textContent = '';
+    
+    // Re-habilitar zonas
+    dropZones.forEach(zone => zone.style.pointerEvents = 'auto');
     
     // Iniciar desde el Bloque 1
     initializeApp();
@@ -242,7 +242,6 @@ function initializeWordElements() {
         wordBank.appendChild(wordDiv); 
     });
 
-    // Re-habilitar la interacción si se había pausado
     wordBank.style.pointerEvents = 'auto';
 }
 
@@ -270,9 +269,11 @@ function initializeApp() {
         // Tocar para reubicar (Palabra ya colocada)
         dropZones.forEach(function(zone) {
             zone.addEventListener('click', function(e) {
+                // Si el clic fue en una palabra y no hay ninguna otra seleccionada
                 if (e.target.classList.contains('selectable-word') && !selectedWord) {
                     returnToBank(e.target);
-                    handleWordSelection(e);
+                    // Usamos el evento.target para asegurar que seleccionamos la que acabamos de devolver
+                    handleWordSelection(e); 
                 }
             });
         });
