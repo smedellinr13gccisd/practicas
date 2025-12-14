@@ -1,23 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Lista completa de sílabas comunes de dos letras (consonante + vocal)
+    // Lista completa de sílabas comunes (se mantiene)
     const allSyllables = [
-        "ma", "me", "mi", "mo", "mu", 
-        "pa", "pe", "pi", "po", "pu", 
-        "sa", "se", "si", "so", "su", 
-        "la", "le", "li", "lo", "lu", 
-        "da", "de", "di", "do", "du", 
-        "ra", "re", "ri", "ro", "ru", 
-        "na", "ne", "ni", "no", "nu",
-        "ta", "te", "ti", "to", "tu",
-        "ca", "co", "cu", // Ce, Ci tienen sonido diferente
-        "que", "qui", // Sílabas con 'q'
-        "ga", "go", "gu", // Ge, Gi tienen sonido diferente
-        "cha", "che", "chi", "cho", "chu", // Dígrafo CH
-        "lla", "lle", "lli", "llo", "llu", // Dígrafo LL
-        "ba", "be", "bi", "bo", "bu",
-        "fa", "fe", "fi", "fo", "fu",
-        "ja", "je", "ji", "jo", "ju",
-        "va", "ve", "vi", "vo", "vu",
+        "ma", "me", "mi", "mo", "mu", "pa", "pe", "pi", "po", "pu", 
+        "sa", "se", "si", "so", "su", "la", "le", "li", "lo", "lu", 
+        "da", "de", "di", "do", "du", "ra", "re", "ri", "ro", "ru", 
+        "na", "ne", "ni", "no", "nu", "ta", "te", "ti", "to", "tu",
+        "ca", "co", "cu", "que", "qui", "ga", "go", "gu", 
+        "cha", "che", "chi", "cho", "chu", "lla", "lle", "lli", "llo", "llu", 
+        "ba", "be", "bi", "bo", "bu", "fa", "fe", "fi", "fo", "fu",
+        "ja", "je", "ji", "jo", "ju", "va", "ve", "vi", "vo", "vu",
         "za", "ze", "zi", "zo", "zu",
     ];
     
@@ -25,15 +16,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentCorrectSyllable = '';
     let completedCount = 0;
     let preferredVoice = null; 
-    
+
     const optionsArea = document.getElementById('syllable-options');
     const playButton = document.getElementById('play-syllable-btn');
     const nextButton = document.getElementById('next-syllable-btn');
     const countDisplay = document.getElementById('completed-count');
     const errorModal = document.getElementById('error-modal');
     const closeModalButton = document.getElementById('close-modal-btn');
+    const instructionText = document.querySelector('.instruction'); 
 
-    // --- Configuración de Voz (Optimizado para tono infantil en iOS) ---
+    // --- Configuración de Voz (Se mantiene la optimización para iOS) ---
     function setPreferredVoice() {
         const voices = speechSynthesis.getVoices();
         const targetVoiceNames = [
@@ -55,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     /**
-     * Usa la Web Speech API para leer la sílaba en voz alta.
+     * Usa la Web Speech API para leer la sílaba en voz alta y HABILITAR las opciones.
      */
     function speakSyllable(syllable) {
         if (!syllable) return;
@@ -63,12 +55,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (speechSynthesis.speaking) {
             speechSynthesis.cancel();
         }
+        
+        // Bloquear el botón de bocina mientras habla
+        playButton.disabled = true;
 
         const utterance = new SpeechSynthesisUtterance(syllable);
         
         // Parámetros CRÍTICOS para voz infantil en iOS
         utterance.rate = 0.9;  
-        utterrence.pitch = 1.2; 
+        utterance.pitch = 1.2; 
         
         if (preferredVoice) {
             utterance.voice = preferredVoice;
@@ -78,24 +73,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         speechSynthesis.speak(utterance);
+        
+        // El evento onstart es el más confiable para habilitar interacción en iOS
+        utterance.onstart = () => {
+             enableSyllableBoxes();
+             instructionText.textContent = "¡Selecciona la sílaba correcta!";
+        };
+        
+        // Re-habilitar el botón de bocina al finalizar para poder repetir la sílaba
+        utterance.onend = () => {
+             playButton.disabled = false;
+        };
+    }
+    
+    /**
+     * Habilita las cajas eliminando la clase de bloqueo inicial.
+     */
+    function enableSyllableBoxes() {
+        document.querySelectorAll('.syllable-box').forEach(box => {
+            box.classList.remove('disabled-start'); // Elimina el bloqueo de interacción
+            box.addEventListener('click', handleSelection); // Añade el listener
+        });
     }
 
     /**
-     * Obtiene una sílaba correcta al azar y 4 sílabas incorrectas únicas.
+     * Deshabilita la interacción (al inicio o al acertar/fallar).
+     */
+    function disableSyllableBoxes() {
+        document.querySelectorAll('.syllable-box').forEach(box => {
+            box.classList.add('disabled-start');
+            box.removeEventListener('click', handleSelection);
+        });
+    }
+    
+    /**
+     * Obtiene opciones (se mantiene).
      */
     function generateOptions() {
         const shuffledSyllables = [...allSyllables].sort(() => 0.5 - Math.random());
-        
-        // 1. Seleccionar la sílaba correcta
         currentCorrectSyllable = shuffledSyllables[0];
-        
-        // 2. Seleccionar 4 sílabas incorrectas ÚNICAS
         let incorrectOptions = shuffledSyllables.slice(1, NUM_OPTIONS);
-        
-        // 3. Combinar y barajar las 5 opciones
         let options = [currentCorrectSyllable, ...incorrectOptions];
         options.sort(() => 0.5 - Math.random());
-        
         return options;
     }
 
@@ -105,61 +124,49 @@ document.addEventListener('DOMContentLoaded', () => {
     function initializePractice() {
         const options = generateOptions();
         
-        optionsArea.innerHTML = ''; // Borrar todas las cajas anteriores
+        optionsArea.innerHTML = ''; 
         nextButton.classList.add('hidden');
-        
+        instructionText.textContent = "Pulsa la bocina para escuchar la sílaba.";
+        playButton.disabled = false; // Asegurar que el botón de bocina esté activo
+
         options.forEach(syllable => {
             const box = document.createElement('div');
-            box.className = 'syllable-box';
-            box.textContent = syllable.toUpperCase(); // Mostrar en mayúsculas para claridad
+            box.className = 'syllable-box disabled-start'; // INICIA BLOQUEADO
+            box.textContent = syllable.toUpperCase(); 
             box.setAttribute('data-syllable', syllable);
-            box.addEventListener('click', handleSelection);
+            // El listener se añade SÓLO al presionar la bocina
             optionsArea.appendChild(box);
         });
-
-        // Reproducir la sílaba correcta automáticamente
-        // speakSyllable(currentCorrectSyllable); 
         
-        // Opcional: enfocar el botón de Play para que sea el primer toque
-        playButton.focus();
+        // Asegurar el bloqueo inicial de las cajas
+        disableSyllableBoxes(); 
     }
     
     /**
      * Maneja la selección de una caja de sílaba por el estudiante.
      */
     function handleSelection(event) {
+        
         const selectedBox = event.target;
         const selectedSyllable = selectedBox.getAttribute('data-syllable');
         
-        // Deshabilitar todas las cajas mientras se procesa la selección
-        document.querySelectorAll('.syllable-box').forEach(box => box.classList.add('disabled'));
+        // Bloquear todas las cajas inmediatamente después de la selección
+        disableSyllableBoxes(); 
 
         if (selectedSyllable === currentCorrectSyllable) {
             // ACIERTO
+            selectedBox.classList.remove('disabled-start'); // Quitar bloqueo para mostrar el verde
             selectedBox.classList.add('correct');
             completedCount++;
             countDisplay.textContent = completedCount;
             
-            // Mostrar botón para pasar a la siguiente
             nextButton.classList.remove('hidden');
+            instructionText.textContent = "¡Correcto! Pasa a la siguiente sílaba.";
             
         } else {
             // ERROR
             selectedBox.classList.add('incorrect');
-            
-            // Mostrar pop-up de error
             errorModal.classList.remove('hidden');
-            
-            // Re-habilitar las cajas incorrectas (después de cerrar el modal)
-            document.querySelectorAll('.syllable-box').forEach(box => {
-                if (!box.classList.contains('correct')) {
-                    box.classList.remove('disabled');
-                    // Quitar el color rojo de la caja seleccionada para que puedan intentarlo de nuevo
-                    setTimeout(() => {
-                        box.classList.remove('incorrect');
-                    }, 500); 
-                }
-            });
         }
     }
     
@@ -167,15 +174,15 @@ document.addEventListener('DOMContentLoaded', () => {
      * Reinicia la práctica para la siguiente sílaba.
      */
     function nextPractice() {
-        // Asegurarse de que las cajas estén habilitadas antes de regenerar
-        document.querySelectorAll('.syllable-box').forEach(box => box.classList.remove('disabled'));
         initializePractice();
     }
     
     // --- Event Listeners ---
     
-    // Al pulsar la bocina
+    // Al pulsar la bocina: Dispara la voz y HABILITA las opciones
     playButton.addEventListener('click', () => {
+        // Bloquear temporalmente el botón de bocina para evitar clics múltiples
+        playButton.disabled = true;
         speakSyllable(currentCorrectSyllable);
     });
     
@@ -185,6 +192,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Al pulsar el botón 'Entendido' del pop-up de error
     closeModalButton.addEventListener('click', () => {
         errorModal.classList.add('hidden');
+        
+        // 1. Quitar el color rojo y re-habilitar las cajas incorrectas
+        document.querySelectorAll('.syllable-box').forEach(box => {
+            if (!box.classList.contains('correct')) {
+                 box.classList.remove('incorrect');
+            }
+        });
+        
+        // 2. Re-habilitar interacción para que puedan volver a elegir
+        enableSyllableBoxes();
+        
+        // 3. Volver a reproducir la sílaba para ayudar al estudiante
+        speakSyllable(currentCorrectSyllable);
     });
 
     // Iniciar la primera práctica
