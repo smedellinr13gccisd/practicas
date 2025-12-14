@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let completedCount = 0;
     let errorCount = 0;
     let preferredVoice = null; 
-    let isInitialized = false; 
+    let isInitialized = false; // Bandera para controlar la primera pulsación y el estado del juego
 
     const optionsArea = document.getElementById('syllable-options');
     const playButton = document.getElementById('play-syllable-btn');
@@ -61,6 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
      * Muestra el modal con el mensaje y estilo apropiados.
      */
     function showModal(isCorrect) {
+        // DOBLE PROTECCIÓN: Si el juego no ha sido inicializado, no se abre ningún modal.
+        if (!isInitialized) return; 
+
         mainModal.classList.remove('hidden', 'modal-error', 'modal-success');
         
         if (isCorrect) {
@@ -111,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function enableSyllableBoxes() {
         document.querySelectorAll('.syllable-box').forEach(box => {
-            // Solo habilitamos las cajas que NO han sido marcadas como correctas
             if (!box.classList.contains('correct')) { 
                 box.classList.remove('disabled-start'); 
                 box.addEventListener('click', handleSelection); 
@@ -195,11 +197,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
     
     playButton.addEventListener('click', () => {
+        
         // Lógica de Primera Inicialización (CRÍTICO)
         if (!isInitialized) {
             // 1. Genera las 5 cajas de sílabas por primera vez
             initializePractice();
-            isInitialized = true;
+            isInitialized = true; // El juego ya está inicializado
         }
         
         // 2. Hablar la sílaba (ya sea la primera vez o una repetición)
