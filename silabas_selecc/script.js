@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentCorrectSyllable = '';
     let completedCount = 0;
     let preferredVoice = null; 
+    let isInitialized = false; // Bandera para controlar la primera pulsación
 
     const optionsArea = document.getElementById('syllable-options');
     const playButton = document.getElementById('play-syllable-btn');
@@ -25,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalButton = document.getElementById('close-modal-btn');
     const instructionText = document.querySelector('.instruction'); 
     
-    // Referencia al bloqueador inicial (NUEVO)
     const initialBlocker = document.getElementById('initial-blocker');
 
     // --- Configuración de Voz (Se mantiene la optimización) ---
@@ -88,9 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
     
-    /**
-     * Habilita las cajas eliminando la clase de bloqueo inicial y añadiendo el listener.
-     */
     function enableSyllableBoxes() {
         document.querySelectorAll('.syllable-box').forEach(box => {
             box.classList.remove('disabled-start'); 
@@ -98,9 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    /**
-     * Deshabilita la interacción añadiendo la clase de bloqueo.
-     */
     function disableSyllableBoxes() {
         document.querySelectorAll('.syllable-box').forEach(box => {
             box.classList.add('disabled-start');
@@ -108,9 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    /**
-     * Obtiene opciones al azar.
-     */
     function generateOptions() {
         const shuffledSyllables = [...allSyllables].sort(() => 0.5 - Math.random());
         currentCorrectSyllable = shuffledSyllables[0];
@@ -143,15 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
         disableSyllableBoxes(); 
     }
     
-    /**
-     * Maneja la selección de una caja.
-     */
     function handleSelection(event) {
         
         const selectedBox = event.target;
         const selectedSyllable = selectedBox.getAttribute('data-syllable');
         
-        // Bloquear todas las cajas inmediatamente después de la selección
         disableSyllableBoxes(); 
 
         if (selectedSyllable === currentCorrectSyllable) {
@@ -173,41 +160,47 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function nextPractice() {
         initializePractice();
+        // Después de la siguiente práctica, volver a reproducir
+        speakSyllable(currentCorrectSyllable); 
     }
     
     // --- Event Listeners ---
     
     playButton.addEventListener('click', () => {
+        // Lógica de Primera Inicialización
+        if (!isInitialized) {
+            initializePractice();
+            // Eliminamos el mensaje inicial
+            instructionText.textContent = "Pulsa la bocina para escuchar la sílaba."; 
+            isInitialized = true;
+        }
+        
+        // Hablar la sílaba (ya sea la primera vez o una repetición)
         playButton.disabled = true;
         speakSyllable(currentCorrectSyllable);
     });
     
     nextButton.addEventListener('click', nextPractice);
     
-    // Lógica al cerrar el pop-up de error
     closeModalButton.addEventListener('click', () => {
         errorModal.classList.add('hidden');
         
-        // 1. Quitar el color rojo
         document.querySelectorAll('.syllable-box').forEach(box => {
             if (!box.classList.contains('correct')) {
                  box.classList.remove('incorrect');
             }
         });
         
-        // 2. Re-habilitar interacción y volver a reproducir
+        // Vuelve a reproducir la sílaba después de cerrar el error
         enableSyllableBoxes();
         speakSyllable(currentCorrectSyllable);
     });
 
-    // CORRECCIÓN CRÍTICA FINAL: Retraso de 500ms + ELIMINAR BLOQUEADOR DE PANTALLA
+    // CRÍTICO: SOLO eliminamos el bloqueador después de un retraso mínimo
     setTimeout(() => {
-        initializePractice();
-        
-        // ELIMINAR el bloqueador de pantalla completa DESPUÉS de la inicialización
         if (initialBlocker) {
             initialBlocker.style.display = 'none';
         }
-        
+        // NOTA: initializePractice() YA NO se llama aquí. Solo se llama al hacer clic en la bocina.
     }, 500); 
 });
