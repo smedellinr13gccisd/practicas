@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let completedCount = 0;
     let errorCount = 0;
     let preferredVoice = null; 
-    let isInitialized = false; // Bandera para controlar la primera pulsación
+    let isInitialized = false; 
 
     const optionsArea = document.getElementById('syllable-options');
     const playButton = document.getElementById('play-syllable-btn');
@@ -111,6 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function enableSyllableBoxes() {
         document.querySelectorAll('.syllable-box').forEach(box => {
+            // Solo habilitamos las cajas que NO han sido marcadas como correctas
             if (!box.classList.contains('correct')) { 
                 box.classList.remove('disabled-start'); 
                 box.addEventListener('click', handleSelection); 
@@ -230,11 +231,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // **CAMBIO CRÍTICO:** Eliminar el setTimeout. Solo ocultar el bloqueador inmediatamente.
+    // --- CÓDIGO FINAL DE HABILITACIÓN AL CARGAR ---
+    
+    // 1. Eliminar el bloqueador de pantalla completa
     if (initialBlocker) {
         initialBlocker.style.display = 'none';
     }
     
-    // NOTA: La pantalla inicia con el botón de bocina visible y NINGUNA caja de sílaba.
-    // La inicialización del juego ahora depende 100% del primer clic del usuario en la bocina.
+    // 2. HABILITAR EL BOTÓN DE BOCINA (permitiendo la interacción por primera vez)
+    // Esto se hace explícitamente al final del DOMContentLoaded para garantizar que todo esté listo.
+    playButton.disabled = false;
 });
