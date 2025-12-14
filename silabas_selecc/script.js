@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Lista completa de sílabas comunes
+    // Lista completa de sílabas comunes (Vocal-Consonante y Consonante-Vocal)
     const allSyllables = [
         "ma", "me", "mi", "mo", "mu", "pa", "pe", "pi", "po", "pu", 
         "sa", "se", "si", "so", "su", "la", "le", "li", "lo", "lu", 
@@ -10,11 +10,16 @@ document.addEventListener('DOMContentLoaded', () => {
         "ba", "be", "bi", "bo", "bu", "fa", "fe", "fi", "fo", "fu",
         "ja", "je", "ji", "jo", "ju", "va", "ve", "vi", "vo", "vu",
         "za", "ze", "zi", "zo", "zu",
+        // Sílabas con vocal inicial (Vocal-Consonante)
+        "al", "el", "il", "ol", "ul", "an", "en", "in", "on", "un",
+        "ar", "er", "ir", "or", "ur", "as", "es", "is", "os", "us",
+        "am", "em", "im", "om", "um"
     ];
     
     const NUM_OPTIONS = 5;
     let currentCorrectSyllable = '';
     let completedCount = 0;
+    let errorCount = 0;
     let preferredVoice = null; 
     let isInitialized = false; // Bandera para controlar la primera pulsación
 
@@ -22,13 +27,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const playButton = document.getElementById('play-syllable-btn');
     const nextButton = document.getElementById('next-syllable-btn');
     const countDisplay = document.getElementById('completed-count');
-    const errorModal = document.getElementById('error-modal');
-    const closeModalButton = document.getElementById('close-modal-btn');
-    const instructionText = document.querySelector('.instruction'); 
+    const errorCountDisplay = document.getElementById('error-count');
     
+    // Elementos del Modal Unificado
+    const mainModal = document.getElementById('main-modal');
+    const modalMessage = document.getElementById('modal-message');
+    const modalActionButton = document.getElementById('modal-action-btn');
+
+    const instructionText = document.querySelector('.instruction'); 
     const initialBlocker = document.getElementById('initial-blocker');
 
-    // --- Configuración de Voz (Se mantiene la optimización) ---
+    // --- Configuración de Voz (Optimización) ---
     function setPreferredVoice() {
         const voices = speechSynthesis.getVoices();
         const targetVoiceNames = [
@@ -48,10 +57,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     setPreferredVoice();
 
-
     /**
-     * Usa la Web Speech API para leer la sílaba en voz alta y HABILITAR las opciones.
+     * Muestra el modal con el mensaje y estilo apropiados.
      */
+    function showModal(isCorrect) {
+        mainModal.classList.remove('hidden', 'modal-error', 'modal-success');
+        
+        if (isCorrect) {
+            mainModal.classList.add('modal-success');
+            modalMessage.textContent = "¡Correcto! Pasa a la siguiente sílaba. 🎉";
+            modalActionButton.textContent = "Siguiente";
+        } else {
+            mainModal.classList.add('modal-error');
+            modalMessage.textContent = "¡Incorrecto! Vuelve a intentarlo. 🤔";
+            modalActionButton.textContent = "Entendido";
+        }
+    }
+    
     function speakSyllable(syllable) {
         if (!syllable) return;
 
@@ -63,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const utterance = new SpeechSynthesisUtterance(syllable);
         
-        // Parámetros para voz clara e infantil
         utterance.rate = 0.9;  
         utterance.pitch = 1.2; 
         
@@ -88,11 +109,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
     
-    // NOTA: Estas funciones ahora asumen que las cajas existen, por lo que solo se llaman después de la inicialización
     function enableSyllableBoxes() {
         document.querySelectorAll('.syllable-box').forEach(box => {
-            box.classList.remove('disabled-start'); 
-            box.addEventListener('click', handleSelection); 
+            if (!box.classList.contains('correct')) { 
+                box.classList.remove('disabled-start'); 
+                box.addEventListener('click', handleSelection); 
+            }
         });
     }
 
@@ -113,8 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Inicializa una nueva práctica de sílaba. 
-     * NOTA: Esta función AHORA GENERA LAS CAJAS.
+     * Inicializa una nueva práctica de sílaba, genera las cajas y las bloquea.
      */
     function initializePractice() {
         const options = generateOptions();
@@ -145,21 +166,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectedSyllable === currentCorrectSyllable) {
             // ACIERTO
             selectedBox.classList.remove('disabled-start');
+            selectedBox.classList.remove('incorrect'); // Limpieza
             selectedBox.classList.add('correct');
+            
             completedCount++;
             countDisplay.textContent = completedCount;
             
-            nextButton.classList.remove('hidden');
-            instructionText.textContent = "¡Correcto! Pasa a la siguiente sílaba.";
+            showModal(true); // Mostrar modal de éxito
             
         } else {
             // ERROR
             selectedBox.classList.add('incorrect');
-            errorModal.classList.remove('hidden');
+            errorCount++;
+            errorCountDisplay.textContent = errorCount;
+            
+            showModal(false); // Mostrar modal de error
         }
     }
     
     function nextPractice() {
+        mainModal.classList.add('hidden');
         initializePractice();
         // Después de la siguiente práctica, volver a reproducir
         speakSyllable(currentCorrectSyllable); 
@@ -180,27 +206,35 @@ document.addEventListener('DOMContentLoaded', () => {
         speakSyllable(currentCorrectSyllable);
     });
     
-    nextButton.addEventListener('click', nextPractice);
-    
-    closeModalButton.addEventListener('click', () => {
-        errorModal.classList.add('hidden');
+    // Manejador del botón del modal (unificado para acierto/error)
+    modalActionButton.addEventListener('click', () => {
         
-        document.querySelectorAll('.syllable-box').forEach(box => {
-            if (!box.classList.contains('correct')) {
-                 box.classList.remove('incorrect');
-            }
-        });
-        
-        // Vuelve a reproducir la sílaba después de cerrar el error
-        enableSyllableBoxes();
-        speakSyllable(currentCorrectSyllable);
+        if (mainModal.classList.contains('modal-success')) {
+             // Si fue acierto, pasar a la siguiente práctica (el modal se cierra dentro de nextPractice)
+             nextPractice(); 
+             
+        } else {
+            // Si fue error, cerrar el modal, limpiar el rojo y re-habilitar
+            mainModal.classList.add('hidden');
+            
+            // 1. Quitar el color rojo de la caja incorrecta
+            document.querySelectorAll('.syllable-box').forEach(box => {
+                if (!box.classList.contains('correct')) {
+                     box.classList.remove('incorrect');
+                }
+            });
+            
+            // 2. Re-habilitar interacción y volver a reproducir la sílaba
+            enableSyllableBoxes();
+            speakSyllable(currentCorrectSyllable);
+        }
     });
 
-    // CRÍTICO: SOLO eliminamos el bloqueador después de un retraso mínimo
-    setTimeout(() => {
-        if (initialBlocker) {
-            initialBlocker.style.display = 'none';
-        }
-        // NOTA: La pantalla inicia con el botón de bocina visible y NINGUNA caja de sílaba
-    }, 500); 
+    // **CAMBIO CRÍTICO:** Eliminar el setTimeout. Solo ocultar el bloqueador inmediatamente.
+    if (initialBlocker) {
+        initialBlocker.style.display = 'none';
+    }
+    
+    // NOTA: La pantalla inicia con el botón de bocina visible y NINGUNA caja de sílaba.
+    // La inicialización del juego ahora depende 100% del primer clic del usuario en la bocina.
 });
