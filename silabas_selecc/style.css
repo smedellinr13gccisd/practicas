@@ -88,7 +88,6 @@ h1 {
 #play-syllable-btn:disabled {
     background-color: #bbdefb;
     cursor: not-allowed;
-    /* Opacidad para visualmente indicar que está desactivado */
     opacity: 0.7; 
 }
 
@@ -98,16 +97,23 @@ h1 {
     color: #78909c;
 }
 
-/* --- Área de Opciones de Sílabas --- */
+/* --- Área de Opciones de Sílabas (Usando radio/label) --- */
 .syllable-options {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 20px;
     margin-bottom: 30px;
+    /* Usamos un formulario, pero se comporta como un área de botones */
 }
 
-.syllable-box {
+/* Ocultar el input de radio nativo */
+.syllable-options input[type="radio"] {
+    display: none;
+}
+
+/* Estilo de la etiqueta (Label) que actúa como botón de sílaba */
+.syllable-options label {
     width: 110px; 
     height: 110px;
     background-color: #f7f7f7;
@@ -122,49 +128,34 @@ h1 {
     transition: border-color 0.3s, background-color 0.3s, transform 0.1s;
     user-select: none;
     color: var(--color-text);
+    box-sizing: border-box; /* Asegura que el padding no cambie el tamaño total */
 }
 
-.syllable-box:hover:not(.disabled-start) {
+.syllable-options label:hover:not(.disabled) {
     background-color: #e0e0e0;
     transform: translateY(-2px);
 }
 
-/* Bloqueo para evitar interacciones no deseadas */
-.syllable-box.disabled-start {
+/* Estado Deshabilitado (antes de oír la sílaba o después de seleccionar) */
+.syllable-options label.disabled {
     pointer-events: none; 
     opacity: 0.6; 
 }
 
-.syllable-box.correct {
+/* Estado cuando se selecciona la respuesta */
+
+/* Respuesta Correcta */
+.syllable-options input:checked + label.correct {
     border-color: var(--color-success);
     background-color: #e8f5e9; 
+    pointer-events: none; /* Bloquea clics adicionales */
 }
 
-.syllable-box.incorrect {
+/* Respuesta Incorrecta */
+.syllable-options input:checked + label.incorrect {
     border-color: var(--color-error);
     background-color: #ffebee; 
-}
-
-/* --- Botón Siguiente --- */
-#next-syllable-btn {
-    background-color: var(--color-success);
-    color: white;
-    border: none;
-    padding: 15px 35px;
-    border-radius: 10px;
-    font-size: 1.3em;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    font-weight: bold;
-}
-
-#next-syllable-btn:hover {
-    background-color: #4caf50;
-}
-
-.hidden {
-    display: none;
+    pointer-events: none; /* Bloquea clics adicionales */
 }
 
 /* --- Pop-up / Modal (Unificado) --- */
@@ -197,7 +188,6 @@ h1 {
     font-weight: bold;
 }
 
-/* Estilos dinámicos del modal */
 .modal-error p {
     color: var(--color-error);
 }
@@ -227,7 +217,11 @@ h1 {
     filter: brightness(110%);
 }
 
-/* --- Capa de Bloqueo de Interacción --- */
+.hidden {
+    display: none;
+}
+
+/* --- Capa de Bloqueo de Interacción (Se mantiene) --- */
 #initial-blocker {
     position: fixed;
     top: 0;
