@@ -24,8 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorModal = document.getElementById('error-modal');
     const closeModalButton = document.getElementById('close-modal-btn');
     const instructionText = document.querySelector('.instruction'); 
+    
+    // Referencia al bloqueador inicial (NUEVO)
+    const initialBlocker = document.getElementById('initial-blocker');
 
-    // --- Configuración de Voz (Optimizado para Tono Infantil/Claro) ---
+    // --- Configuración de Voz (Se mantiene la optimización) ---
     function setPreferredVoice() {
         const voices = speechSynthesis.getVoices();
         const targetVoiceNames = [
@@ -60,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const utterance = new SpeechSynthesisUtterance(syllable);
         
-        // Parámetros para voz clara e infantil (igual que en oraciones)
+        // Parámetros para voz clara e infantil
         utterance.rate = 0.9;  
         utterance.pitch = 1.2; 
         
@@ -73,13 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         speechSynthesis.speak(utterance);
         
-        // Habilitar interacción SOLAMENTE cuando la voz empieza a sonar (seguro en iOS)
+        // Habilitar interacción SOLAMENTE cuando la voz empieza a sonar
         utterance.onstart = () => {
              enableSyllableBoxes();
              instructionText.textContent = "¡Selecciona la sílaba correcta!";
         };
         
-        // Re-habilitar el botón de bocina al finalizar para poder repetir la sílaba
+        // Re-habilitar el botón de bocina al finalizar
         utterance.onend = () => {
              playButton.disabled = false;
         };
@@ -90,13 +93,13 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function enableSyllableBoxes() {
         document.querySelectorAll('.syllable-box').forEach(box => {
-            box.classList.remove('disabled-start'); // Quita el bloqueo de CSS (pointer-events: none)
-            box.addEventListener('click', handleSelection); // Añade la interacción
+            box.classList.remove('disabled-start'); 
+            box.addEventListener('click', handleSelection); 
         });
     }
 
     /**
-     * Deshabilita la interacción añadiendo la clase de bloqueo inicial y quitando el listener.
+     * Deshabilita la interacción añadiendo la clase de bloqueo.
      */
     function disableSyllableBoxes() {
         document.querySelectorAll('.syllable-box').forEach(box => {
@@ -118,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Inicializa una nueva práctica de sílaba (sin interacción inicial).
+     * Inicializa una nueva práctica de sílaba (con las cajas bloqueadas).
      */
     function initializePractice() {
         const options = generateOptions();
@@ -137,7 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
             optionsArea.appendChild(box);
         });
         
-        // Asegurar que no haya listeners activos al inicio
         disableSyllableBoxes(); 
     }
     
@@ -198,8 +200,14 @@ document.addEventListener('DOMContentLoaded', () => {
         speakSyllable(currentCorrectSyllable);
     });
 
-    // CORRECCIÓN CRÍTICA: Retraso de 500ms para evitar el toque inicial de iOS
+    // CORRECCIÓN CRÍTICA FINAL: Retraso de 500ms + ELIMINAR BLOQUEADOR DE PANTALLA
     setTimeout(() => {
         initializePractice();
+        
+        // ELIMINAR el bloqueador de pantalla completa DESPUÉS de la inicialización
+        if (initialBlocker) {
+            initialBlocker.style.display = 'none';
+        }
+        
     }, 500); 
 });
