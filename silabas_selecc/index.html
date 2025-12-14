@@ -11,14 +11,19 @@
     <div class="container">
         <header>
             <h1>Reconocimiento de Sílabas 🗣️</h1>
-            <div id="counter-box">
-                Aciertos: <span id="completed-count">0</span>
+            <div id="counter-group">
+                <div id="counter-box">
+                    Aciertos: <span id="completed-count">0</span>
+                </div>
+                <div id="error-box">
+                    Errores: <span id="error-count">0</span>
+                </div>
             </div>
         </header>
 
         <main>
             <div class="controls-area">
-                <button id="play-syllable-btn" aria-label="Escuchar Sílaba">
+                <button id="play-syllable-btn" aria-label="Escuchar Sílaba" disabled>
                     <i class="fas fa-volume-up"></i>
                 </button>
                 <p class="instruction" id="main-instruction">Pulsa la bocina para iniciar la práctica.</p>
@@ -34,10 +39,10 @@
         </main>
     </div>
 
-    <div id="error-modal" class="modal hidden">
+    <div id="main-modal" class="modal hidden">
         <div class="modal-content">
-            <p>¡Incorrecto! Intenta de nuevo. 🤔</p>
-            <button id="close-modal-btn">Entendido</button>
+            <p id="modal-message"></p>
+            <button id="modal-action-btn">Entendido</button>
         </div>
     </div>
     
