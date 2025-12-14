@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalButton = document.getElementById('close-modal-btn');
     const instructionText = document.querySelector('.instruction'); 
 
-    // --- Configuración de Voz (Se mantiene la optimización para iOS) ---
+    // --- Configuración de Voz (OPTIMIZADO PARA TONO INFANTIL Y CLARIDAD EN IOS) ---
     function setPreferredVoice() {
         const voices = speechSynthesis.getVoices();
         const targetVoiceNames = [
@@ -56,12 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
             speechSynthesis.cancel();
         }
         
-        // Bloquear el botón de bocina mientras habla
         playButton.disabled = true;
 
         const utterance = new SpeechSynthesisUtterance(syllable);
         
-        // Parámetros CRÍTICOS para voz infantil en iOS
+        // Parámetros CRÍTICOS para voz infantil en iOS (idénticos a los de oraciones)
         utterance.rate = 0.9;  
         utterance.pitch = 1.2; 
         
@@ -74,31 +73,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         speechSynthesis.speak(utterance);
         
-        // El evento onstart es el más confiable para habilitar interacción en iOS
         utterance.onstart = () => {
              enableSyllableBoxes();
              instructionText.textContent = "¡Selecciona la sílaba correcta!";
         };
         
-        // Re-habilitar el botón de bocina al finalizar para poder repetir la sílaba
         utterance.onend = () => {
              playButton.disabled = false;
         };
     }
     
-    /**
-     * Habilita las cajas eliminando la clase de bloqueo inicial y añadiendo el listener.
-     */
     function enableSyllableBoxes() {
         document.querySelectorAll('.syllable-box').forEach(box => {
-            box.classList.remove('disabled-start'); // Elimina el bloqueo de CSS
-            box.addEventListener('click', handleSelection); // Añade el listener
+            box.classList.remove('disabled-start');
+            box.addEventListener('click', handleSelection);
         });
     }
 
-    /**
-     * Deshabilita la interacción añadiendo la clase de bloqueo inicial y quitando el listener.
-     */
     function disableSyllableBoxes() {
         document.querySelectorAll('.syllable-box').forEach(box => {
             box.classList.add('disabled-start');
@@ -106,9 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    /**
-     * Obtiene opciones (se mantiene).
-     */
     function generateOptions() {
         const shuffledSyllables = [...allSyllables].sort(() => 0.5 - Math.random());
         currentCorrectSyllable = shuffledSyllables[0];
@@ -118,9 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return options;
     }
 
-    /**
-     * Inicializa una nueva práctica de sílaba.
-     */
     function initializePractice() {
         const options = generateOptions();
         
@@ -131,26 +116,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         options.forEach(syllable => {
             const box = document.createElement('div');
-            // La clase disabled-start está en CSS para bloquear el pointer-events
             box.className = 'syllable-box disabled-start'; 
             box.textContent = syllable.toUpperCase(); 
             box.setAttribute('data-syllable', syllable);
             optionsArea.appendChild(box);
         });
         
-        // Asegurar el bloqueo inicial de las cajas (quitando listeners)
         disableSyllableBoxes(); 
     }
     
-    /**
-     * Maneja la selección de una caja de sílaba por el estudiante.
-     */
     function handleSelection(event) {
         
         const selectedBox = event.target;
         const selectedSyllable = selectedBox.getAttribute('data-syllable');
         
-        // Bloquear todas las cajas inmediatamente después de la selección
         disableSyllableBoxes(); 
 
         if (selectedSyllable === currentCorrectSyllable) {
@@ -170,9 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    /**
-     * Reinicia la práctica para la siguiente sílaba.
-     */
     function nextPractice() {
         initializePractice();
     }
@@ -189,23 +165,18 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModalButton.addEventListener('click', () => {
         errorModal.classList.add('hidden');
         
-        // 1. Quitar el color rojo
         document.querySelectorAll('.syllable-box').forEach(box => {
             if (!box.classList.contains('correct')) {
                  box.classList.remove('incorrect');
             }
         });
         
-        // 2. Re-habilitar interacción y volver a reproducir
         enableSyllableBoxes();
         speakSyllable(currentCorrectSyllable);
     });
 
-    // <<<<<<<<<<<<<<<< CAMBIO CRÍTICO FINAL: RETRASO DE INICIALIZACIÓN >>>>>>>>>>>>>>>>>>
-    // Esperar 500ms (medio segundo) antes de inicializar la práctica. 
-    // Esto da tiempo al navegador de iOS para "digerir" el toque inicial de carga.
+    // RETRASO CRÍTICO FINAL para evitar el toque inicial de iOS
     setTimeout(() => {
         initializePractice();
     }, 500); 
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 });
