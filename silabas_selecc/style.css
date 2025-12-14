@@ -40,13 +40,27 @@ h1 {
     margin-bottom: 10px;
 }
 
-#counter-box {
-    background-color: var(--color-neutral);
+/* --- Contadores --- */
+#counter-group {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+#counter-box, #error-box {
     padding: 8px 15px;
     border-radius: 12px;
     font-weight: bold;
-    display: inline-block;
     font-size: 1em;
+}
+
+#counter-box {
+    background-color: var(--color-neutral);
+}
+
+#error-box {
+    background-color: #ffccbc; /* Naranja muy claro para errores */
 }
 
 /* --- Área de Controles (Bocina) --- */
@@ -74,6 +88,8 @@ h1 {
 #play-syllable-btn:disabled {
     background-color: #bbdefb;
     cursor: not-allowed;
+    /* Opacidad para visualmente indicar que está desactivado */
+    opacity: 0.7; 
 }
 
 .instruction {
@@ -113,7 +129,7 @@ h1 {
     transform: translateY(-2px);
 }
 
-/* Bloqueo inicial y al hacer click */
+/* Bloqueo para evitar interacciones no deseadas */
 .syllable-box.disabled-start {
     pointer-events: none; 
     opacity: 0.6; 
@@ -151,7 +167,7 @@ h1 {
     display: none;
 }
 
-/* --- Pop-up / Modal de Error --- */
+/* --- Pop-up / Modal (Unificado) --- */
 .modal {
     position: fixed;
     z-index: 100;
@@ -177,13 +193,26 @@ h1 {
 
 .modal-content p {
     font-size: 1.6em;
-    color: var(--color-error);
     margin-bottom: 25px;
     font-weight: bold;
 }
 
-#close-modal-btn {
+/* Estilos dinámicos del modal */
+.modal-error p {
+    color: var(--color-error);
+}
+.modal-error button {
     background-color: var(--color-error);
+}
+
+.modal-success p {
+    color: var(--color-success);
+}
+.modal-success button {
+    background-color: var(--color-success);
+}
+
+#modal-action-btn {
     color: white;
     border: none;
     padding: 12px 30px;
@@ -194,11 +223,11 @@ h1 {
     transition: background-color 0.2s;
 }
 
-#close-modal-btn:hover {
-    background-color: #c62828;
+#modal-action-btn:hover {
+    filter: brightness(110%);
 }
 
-/* --- Capa de Bloqueo de Interacción (CRÍTICO) --- */
+/* --- Capa de Bloqueo de Interacción --- */
 #initial-blocker {
     position: fixed;
     top: 0;
