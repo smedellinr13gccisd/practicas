@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let completedCount = 0;
     let errorCount = 0;
     let preferredVoice = null; 
-    let isInitialized = false; // Bandera para controlar la primera pulsación y el estado del juego
+    let isInitialized = false; // Solo será true después del primer clic en la bocina.
 
     const optionsArea = document.getElementById('syllable-options');
     const playButton = document.getElementById('play-syllable-btn');
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const instructionText = document.querySelector('.instruction'); 
     const initialBlocker = document.getElementById('initial-blocker');
 
-    // --- Configuración de Voz (Optimización) ---
+    // --- Configuración de Voz ---
     function setPreferredVoice() {
         const voices = speechSynthesis.getVoices();
         const targetVoiceNames = [
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * Muestra el modal con el mensaje y estilo apropiados.
      */
     function showModal(isCorrect) {
-        // Protección 1: Si el juego no ha sido inicializado, no se abre ningún modal.
+        // Protección: Solo se permite mostrar el modal si el juego ya fue inicializado (es decir, la bocina ya sonó una vez).
         if (!isInitialized) return; 
 
         mainModal.classList.remove('hidden', 'modal-error', 'modal-success');
@@ -115,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function enableSyllableBoxes() {
         document.querySelectorAll('.syllable-box').forEach(box => {
             if (!box.classList.contains('correct')) { 
+                // Quitar la clase que deshabilita la interacción por CSS
                 box.classList.remove('disabled-start'); 
                 box.addEventListener('click', handleSelection); 
             }
@@ -138,7 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Inicializa una nueva práctica de sílaba, genera las cajas y las bloquea.
+     * Genera las cajas de sílabas y las bloquea.
+     * Esta función ahora se llama al cargar el DOM.
      */
     function initializePractice() {
         const options = generateOptions();
@@ -149,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         options.forEach(syllable => {
             const box = document.createElement('div');
-            // Las cajas se crean bloqueadas, se habilitarán al hablar
+            // Las cajas se crean BLOQUEADAS
             box.className = 'syllable-box disabled-start'; 
             box.textContent = syllable.toUpperCase(); 
             box.setAttribute('data-syllable', syllable);
@@ -161,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function handleSelection(event) {
         
-        // PROTECCIÓN 2 (CRÍTICA): Ignorar cualquier clic si el juego aún no se inicializó completamente.
+        // Protección: Ignorar cualquier clic si el juego aún no se inicializó completamente.
         if (!isInitialized) return; 
 
         const selectedBox = event.target;
@@ -172,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectedSyllable === currentCorrectSyllable) {
             // ACIERTO
             selectedBox.classList.remove('disabled-start');
-            selectedBox.classList.remove('incorrect'); // Limpieza
+            selectedBox.classList.remove('incorrect'); 
             selectedBox.classList.add('correct');
             
             completedCount++;
@@ -192,23 +194,21 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function nextPractice() {
         mainModal.classList.add('hidden');
-        initializePractice();
-        // Después de la siguiente práctica, volver a reproducir
+        initializePractice(); // Genera las nuevas cajas y las bloquea
+        // Luego reproduce la voz
+        playButton.disabled = true;
         speakSyllable(currentCorrectSyllable); 
     }
     
     // --- Event Listeners ---
     
     playButton.addEventListener('click', () => {
-        
-        // Lógica de Primera Inicialización (CRÍTICO)
+        // En el primer clic, marcamos la inicialización
         if (!isInitialized) {
-            // 1. Genera las 5 cajas de sílabas por primera vez
-            initializePractice();
-            isInitialized = true; // El juego ya está inicializado
+            isInitialized = true; 
         }
         
-        // 2. Hablar la sílaba (ya sea la primera vez o una repetición)
+        // Hablar la sílaba 
         playButton.disabled = true;
         speakSyllable(currentCorrectSyllable);
     });
@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modalActionButton.addEventListener('click', () => {
         
         if (mainModal.classList.contains('modal-success')) {
-             // Si fue acierto, pasar a la siguiente práctica (el modal se cierra dentro de nextPractice)
+             // Si fue acierto, pasar a la siguiente práctica 
              nextPractice(); 
              
         } else {
@@ -237,13 +237,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- CÓDIGO FINAL DE HABILITACIÓN AL CARGAR ---
+    // --- CÓDIGO FINAL DE INICIALIZACIÓN AL CARGAR (CRÍTICO) ---
     
-    // 1. Eliminar el bloqueador de pantalla completa
+    // 1. Genera las 5 cajas de sílabas al cargar el DOM, pero están BLOQUEADAS por CSS.
+    initializePractice(); 
+    
+    // 2. Eliminar el bloqueador de pantalla completa
     if (initialBlocker) {
         initialBlocker.style.display = 'none';
     }
     
-    // 2. HABILITAR EL BOTÓN DE BOCINA 
+    // 3. HABILITAR EL BOTÓN DE BOCINA (Las cajas siguen deshabilitadas)
     playButton.disabled = false;
 });
