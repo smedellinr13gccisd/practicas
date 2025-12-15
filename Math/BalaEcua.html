@@ -185,9 +185,9 @@
             <div class="relative p-6 border-2 border-gray-300 rounded-lg bg-gray-50 flex flex-col items-center space-y-4">
                 <div class="flag" id="flag-3"></div>
 
-                <!-- Ecuación para el cálculo final (N + C_Var = R) con N como input -->
+                <!-- Ecuación para el cálculo final con N como input, respetando la posición original -->
                 <div class="flex items-center text-3xl font-extrabold space-x-3 mb-4" id="p4-final-balance-display">
-                    <!-- Contenido se inyecta aquí, siempre en el formato: N + C = R con N como input -->
+                    <!-- Contenido se inyecta aquí, respetando la posición de R y N + C_Var -->
                 </div>
                 
                 <div class="w-full flex justify-center">
@@ -414,26 +414,32 @@
                 }
             }
 
-            /** Genera una ecuación en el formato: SideA = SideB, donde uno de los lados es complejo (C_A OP C_B) */
+            /** Genera una ecuación con restricciones numéricas para el método "count on". */
             function generateEquation() {
-                const N = Math.floor(Math.random() * 6) + 3; // N (Answer) entre 3 y 8
-                const C_Var = Math.floor(Math.random() * 6) + 3; // Constante junto a N entre 3 y 8
-                const R = N + C_Var; // Resultado simplificado (e.g., if N=5, C_Var=4, R=9)
+                // RANGOS RESTRINGIDOS:
+                // N (Respuesta): 3 a 5
+                // C_Var (Constante junto a N): 3 a 5
+                // R (Resultado simplificado = N + C_Var): 6 a 10 (Max 10 para 'count on' final)
+                const N = Math.floor(Math.random() * 3) + 3; // N entre 3 y 5
+                const C_Var = Math.floor(Math.random() * 3) + 3; // C_Var entre 3 y 5
+                const R = N + C_Var; 
 
-                const simplifyOp = Math.random() < 0.5 ? '+' : '-'; // 50% chance for + or -
+                const simplifyOp = Math.random() < 0.5 ? '+' : '-'; 
                 
                 let C_A, C_B;
 
                 if (simplifyOp === '+') {
                     // C_A + C_B = R
-                    // Must ensure C_A and C_B are > 0.
-                    C_A = Math.floor(Math.random() * (R - 2)) + 1; // C_A between 1 and R-2
-                    C_B = R - C_A;
+                    C_A = Math.floor(Math.random() * (R - 2)) + 1; // C_A entre 1 y R-2
+                    C_B = R - C_A; // C_B es lo que falta
+                    // Max C_A + C_B = 10, que es seguro para primer grado
                 } else {
                     // C_A - C_B = R
-                    // C_A must be > R. Let C_B be small (1-5)
-                    C_B = Math.floor(Math.random() * 5) + 1; // C_B between 1 and 5
-                    C_A = R + C_B; // C_A is guaranteed to be > R and > C_B
+                    // Queremos que C_A sea pequeño (máx 13) y C_B también pequeño (máx 3).
+                    // C_B es el número que se resta: 1 a 3
+                    C_B = Math.floor(Math.random() * 3) + 1; 
+                    // C_A es el total (R + C_B). Max R=10, Max C_B=3 -> Max C_A = 13
+                    C_A = R + C_B; 
                 }
 
                 const simplifySide = Math.random() < 0.5 ? 'right' : 'left'; // 50% chance
@@ -450,8 +456,7 @@
                 
                 // Definir los contenidos de cada lado
                 const complexContent = `${C_A} ${equation.OP} ${C_B}`;
-                const simpleContent = `N + ${C_Var}`;
-                const simpleContentNFirst = `N + ${C_Var}`; // Aseguramos el orden en P4
+                const simpleContent = `N + ${C_Var}`; 
 
                 if (simplifySide === 'right') {
                     // Format: N + C_Var = C_A OP C_B
@@ -469,9 +474,10 @@
                     equation.complexContent = complexContent; // Lado a simplificar
                 }
 
-                equation.simplifiedLeft = simplifySide === 'left' ? R : simpleContentNFirst;
-                equation.simplifiedRight = simplifySide === 'right' ? R : simpleContentNFirst;
-
+                // Contenido simplificado para P3
+                equation.simplifiedLeft = simplifySide === 'left' ? R : simpleContent;
+                equation.simplifiedRight = simplifySide === 'right' ? R : simpleContent;
+                
                 return equation;
             }
 
@@ -571,26 +577,38 @@
                     elements.inputs[2].disabled = true;
                     elements.buttons.check2.disabled = true;
                     
-                    // Configurar Phase 3 Display (Ecuación Simplificada, Paso 3)
-                    const N_plus_C = `N + ${state.equation.C_Var}`;
                     const R_val = state.equation.R;
                     
-                    // Mostrar la ecuación simplificada (R = N + C_Var o N + C_Var = R)
+                    // Paso 3: Mostrar la ecuación simplificada (R = N + C_Var o N + C_Var = R)
                     elements.display.p3SimplifiedDisplay.innerHTML = `
                         <span class="text-purple-600">${state.equation.simplifiedLeft}</span>
                         <span class="text-gray-800">=</span>
                         <span class="text-purple-600">${state.equation.simplifiedRight}</span>
                     `;
 
-                    // Configurar Phase 4 Display (Balanceo, Paso 4)
-                    // NOTA: Para el paso 4, siempre volvemos al formato N + C = R con N como input.
-                    elements.display.p4FinalBalanceDisplay.innerHTML = `
+                    // Paso 4: Configurar la ecuación final para el balanceo, respetando la posición
+                    const N_input_html = `
                         <input type="number" id="input-phase-3" placeholder="N" value="" class="equation-box input-box text-center focus:ring-4 focus:ring-yellow-500/50 focus:border-yellow-600 w-20">
-                        <span class="text-gray-800">+</span>
-                        <span id="display-constant-left-interactive" class="text-green-600 font-bold">${state.equation.C_Var}</span> 
-                        <span class="text-gray-800">=</span>
-                        <span id="display-result-right-interactive" class="text-blue-600 font-bold">${R_val}</span>
                     `;
+                    const Variable_Side_html = `
+                        <div class="flex items-center space-x-2">
+                            ${N_input_html}
+                            <span class="text-gray-800">+</span>
+                            <span id="display-constant-left-interactive" class="text-green-600 font-bold">${state.equation.C_Var}</span>
+                        </div>
+                    `;
+                    const Constant_Side_html = `<span class="text-blue-600 font-bold">${R_val}</span>`;
+                    
+                    let p4_content;
+                    if (state.equation.simplifySide === 'right') {
+                        // Original: N + C_Var = Complex -> Simplified: N + C_Var = R
+                        p4_content = `${Variable_Side_html} <span class="text-gray-800">=</span> ${Constant_Side_html}`;
+                    } else {
+                        // Original: Complex = N + C_Var -> Simplified: R = N + C_Var
+                        p4_content = `${Constant_Side_html} <span class="text-gray-800">=</span> ${Variable_Side_html}`;
+                    }
+                    
+                    elements.display.p4FinalBalanceDisplay.innerHTML = p4_content;
 
                     // Reasignar el input de Fase 3
                     elements.inputs[3] = document.getElementById('input-phase-3');
@@ -601,7 +619,7 @@
                 }
             });
 
-            // Fase 3: Solución final (N + C_Var = R)
+            // Fase 3: Solución final (N)
             elements.buttons.check3.addEventListener('click', () => {
                 const userInput = parseInt(elements.inputs[3].value);
                 const isCorrect = userInput === state.equation.N;
@@ -654,18 +672,21 @@
                 elements.display.p1RightSide.textContent = state.equation.rightSide;
 
                 // Aplicar color de borde/fondo según la parte compleja
-                if (state.equation.simplifySide === 'left') {
-                    elements.display.p1LeftContainer.classList.add('border-blue-400', 'bg-blue-50/50');
-                    elements.display.p1LeftContainer.classList.remove('border-green-400', 'bg-green-50/50');
-                    elements.display.p1RightContainer.classList.add('border-green-400', 'bg-green-50/50');
-                    elements.display.p1RightContainer.classList.remove('border-blue-400', 'bg-blue-50/50');
-                } else {
-                    elements.display.p1LeftContainer.classList.add('border-green-400', 'bg-green-50/50');
-                    elements.display.p1LeftContainer.classList.remove('border-blue-400', 'bg-blue-50/50');
-                    elements.display.p1RightContainer.classList.add('border-blue-400', 'bg-blue-50/50');
-                    elements.display.p1RightContainer.classList.remove('border-green-400', 'bg-green-50/50');
-                }
+                const leftEl = elements.display.p1LeftContainer;
+                const rightEl = elements.display.p1RightContainer;
 
+                if (state.equation.simplifySide === 'left') {
+                    // Lado izquierdo: complejo (azul/simplificar)
+                    leftEl.className = 'p-2 border-2 rounded-lg border-blue-400 bg-blue-50/50';
+                    // Lado derecho: fijo (verde/variable)
+                    rightEl.className = 'p-2 border-2 rounded-lg border-green-400 bg-green-50/50';
+                } else {
+                    // Lado izquierdo: fijo (verde/variable)
+                    leftEl.className = 'p-2 border-2 rounded-lg border-green-400 bg-green-50/50';
+                    // Lado derecho: complejo (azul/simplificar)
+                    rightEl.className = 'p-2 border-2 rounded-lg border-blue-400 bg-blue-50/50';
+                }
+                
                 // Limpiar displays de fases posteriores
                 elements.display.p2LeftDisplay.innerHTML = '';
                 elements.display.p2RightDisplay.innerHTML = '';
