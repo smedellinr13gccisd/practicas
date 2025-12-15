@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Práctica Interactiva de Ecuaciones</title>
+    <!-- Tailwind CSS CDN para estilos rápidos y responsivos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font 'Inter' (recommended) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Tone.js CDN para efectos de sonido -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        /* Estilos personalizados y para las "banderas" de evaluación */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .flag {
+            width: 30px;
+            height: 40px;
+            background-color: #f97316; /* Naranja inicial */
+            border-radius: 0 0 5px 5px;
+            border: 2px solid #a16207;
+            position: absolute;
+            top: 0;
+            right: 0;
+            transform: translateY(-100%);
+            transition: background-color 0.3s ease;
+        }
+        .flag-green { background-color: #10b981; border-color: #059669; }
+        .flag-red { background-color: #ef4444; border-color: #dc2626; }
+
+        .equation-box {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            min-width: 50px;
+            height: 50px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            background-color: #ffffff;
+            position: relative;
+        }
+        .input-box {
+            background-color: #fef3c7; /* Amarillo suave */
+            border: 2px dashed #f59e0b;
+        }
+        .step-container {
+            display: none; /* Se muestran con JS, pero las anteriores quedan visibles */
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        /* Estilo para los elementos invisibles de alineación */
+        .invisible-align {
+            visibility: hidden;
+            pointer-events: none;
+            flex: 1; /* Permite que el div invisible ocupe el espacio */
+            display: flex;
+            justify-content: flex-end; /* Alinea el contenido interno a la derecha */
+        }
+        /* Estilo para el contenedor de la parte compleja que necesita ser resuelta */
+        .complex-side-highlight {
+            position: relative;
+            padding: 0 4px;
+        }
+        .complex-side-highlight::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            bottom: -5px;
+            left: -5px;
+            border: 2px dashed #f59e0b; /* Borde punteado mejorado */
+            border-radius: 8px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="p-4 flex items-start justify-center min-h-screen">
+
+    <div id="app-container" class="w-full max-w-xl bg-white p-6 md:p-8 rounded-xl shadow-2xl border border-gray-100">
+
+        <h1 class="text-3xl font-extrabold text-blue-800 mb-4 text-center">
+            Balanceo de Ecuaciones (1er Grado)
+        </h1>
+        
+        <!-- Contador de Estadísticas -->
+        <div class="flex justify-around text-sm font-semibold mb-6 p-3 bg-gray-100 rounded-lg">
+            <p class="text-green-600">Resueltos: <span id="solved-counter" class="text-lg font-bold">0</span></p>
+            <p class="text-red-600">Errores: <span id="error-counter" class="text-lg font-bold">0</span></p>
+            <!-- Mostrar el ID del usuario para facilitar la colaboración/debugging -->
+            <p class="text-gray-500 text-xs self-center hidden md:inline-block">ID: <span id="user-id-display">Cargando...</span></p>
+        </div>
+
+        <p class="text-gray-600 mb-8 text-center">
+            Instrucción: Sigue los pasos para encontrar el valor de $N$.
+        </p>
+
+        <!-- Contenedor del Título de la Ecuación -->
+        <div class="flex justify-center items-center text-2xl font-bold mb-8 space-x-2">
+            <span class="text-gray-500">Ecuación:</span>
+            <span id="full-equation-display" class="text-blue-600"></span>
+        </div>
+
+        <!-- FASE 1: Identificación (Simplificar el lado constante) -->
+        <div id="phase-1-container" class="step-container" style="display: block; border-top: none; margin-top: 0;">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Paso 1: Identifica el lado a simplificar primero.</h2>
+
+            <div class="relative p-6 border-2 border-gray-300 rounded-lg bg-gray-50 flex flex-col items-center space-y-6">
+                <div class="flag" id="flag-1"></div>
+                
+                <div class="flex items-center text-3xl font-extrabold space-x-3">
+                    <!-- Lado Izquierdo -->
+                    <div id="p1-left-container" class="p-2 border-2 rounded-lg border-green-400 bg-green-50/50">
+                        <span id="display-left-side" class="text-green-600 font-bold"></span>
+                    </div>
+                    <span class="text-gray-800">=</span>
+                    <!-- Lado Derecho -->
+                    <div id="p1-right-container" class="p-2 border-2 rounded-lg border-blue-400 bg-blue-50/50">
+                        <span id="display-right-side" class="text-blue-600 font-bold"></span>
+                    </div>
+                </div>
+
+                <div class="flex space-x-4 w-full justify-center mt-4">
+                    <button id="select-left-btn" data-selection="left" class="action-btn px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow-md transition transform hover:scale-105">
+                        Simplificar Lado Izquierdo
+                    </button>
+                    <button id="select-right-btn" data-selection="right" class="action-btn px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg shadow-md transition transform hover:scale-105">
+                        Simplificar Lado Derecho
+                    </button>
+                </div>
+            </div>
+            <p id="feedback-1" class="text-center mt-4 text-sm font-medium h-6"></p>
+        </div>
+
+        <!-- FASE 2: Simplificación con Conexiones Visuales (Insciso B) -->
+        <div id="phase-2-container" class="step-container">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Paso 2: Simplifica el lado de las constantes.</h2>
+            <div class="relative p-6 border-2 border-gray-300 rounded-lg bg-gray-50 flex flex-col items-center space-y-4">
+                <div class="flag" id="flag-2"></div>
+                
+                <!-- 1. Ecuación en su forma original, con el lado a resolver identificado -->
+                <div class="flex items-center text-3xl font-extrabold space-x-3 mb-4 w-full justify-center">
+                    <div id="p2-left-display"></div>
+                    <span class="text-gray-800">=</span>
+                    <div id="p2-right-display"></div>
+                </div>
+
+                <!-- 2. Líneas y Caja de Resultado - La lógica de alineación se maneja en JS -->
+                <div class="w-full flex justify-center mt-2">
+                    <!-- Placeholder/Contenedor para alinear la solución bajo la parte compleja -->
+                    <div id="alignment-wrapper" class="w-full flex justify-center items-end">
+                        <!-- El contenido real de la alineación se inyecta aquí por JS para centrar el input -->
+                    </div>
+                </div>
+                
+                <!-- Ajuste de padding para dejar espacio al input -->
+                <div class="w-full flex justify-center pt-8"> 
+                    <button id="check-phase-2-btn" class="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-lg shadow-md transition transform hover:scale-105">
+                        Verificar Simplificación
+                    </button>
+                </div>
+            </div>
+            <p id="feedback-2" class="text-center mt-4 text-sm font-medium h-6"></p>
+        </div>
+
+
+        <!-- FASE 3: Balanceo y Solución de N (Insciso C) -->
+        <div id="phase-3-container" class="step-container">
+            
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Paso 3: Ecuación completamente simplificada.</h2>
+            <div class="p-6 border-2 border-gray-300 rounded-lg bg-gray-100 flex flex-col items-center space-y-4 mb-6">
+                <!-- Ecuación completamente simplificada (N + C_Var = R) o (R = N + C_Var) -->
+                <div class="flex items-center text-3xl font-extrabold space-x-3" id="p3-simplified-display">
+                    <!-- Contenido se inyecta aquí -->
+                </div>
+            </div>
+
+            <!-- MODIFICACIÓN SOLICITADA: N como input dentro de la ecuación simplificada (Paso 4) -->
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Paso 4: Balancea la ecuación y encuentra el valor de $N$.</h2>
+            <div class="relative p-6 border-2 border-gray-300 rounded-lg bg-gray-50 flex flex-col items-center space-y-4">
+                <div class="flag" id="flag-3"></div>
+
+                <!-- Ecuación para el cálculo final (N + C_Var = R) con N como input -->
+                <div class="flex items-center text-3xl font-extrabold space-x-3 mb-4" id="p4-final-balance-display">
+                    <!-- Contenido se inyecta aquí, siempre en el formato: N + C = R con N como input -->
+                </div>
+                
+                <div class="w-full flex justify-center">
+                    <button id="check-phase-3-btn" class="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-lg shadow-md transition transform hover:scale-105">
+                        Verificar N
+                    </button>
+                </div>
+            </div>
+            <p id="feedback-3" class="text-center mt-4 text-sm font-medium h-6"></p>
+        </div>
+
+        <!-- FASE 4: Completado -->
+        <div id="phase-4-container" class="step-container text-center pt-8 pb-4">
+            <div class="text-5xl mb-4" role="img" aria-label="Trophy">🏆</div>
+            <h2 class="text-3xl font-bold text-green-600 mb-2">¡Práctica Terminada!</h2>
+            <p class="text-xl text-gray-700">Has balanceado la ecuación correctamente. ¡Felicidades!</p>
+            <p class="text-xl font-bold mt-4">N = <span id="final-answer-display"></span></p>
+            <button id="reset-btn" class="mt-8 px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg transition transform hover:scale-105">
+                Iniciar Nueva Práctica
+            </button>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- FIREBASE CONFIGURATION AND AUTHENTICATION ---
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        let db;
+        let auth;
+        let userId = null;
+
+        if (Object.keys(firebaseConfig).length > 0) {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            // setLogLevel('Debug'); // Uncomment for debugging Firestore logs
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    document.getElementById('user-id-display').textContent = userId;
+                    setupStatsListener();
+                } else {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined') {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Authentication failed. Falling back to anonymous.", error);
+                        await signInAnonymously(auth);
+                    }
+                }
+            });
+        } else {
+            console.warn("Firebase configuration is missing. Counters will not persist.");
+            document.getElementById('user-id-display').textContent = 'No DB';
+        }
+
+        // --- STATS LOGIC ---
+        function getStatsRef() {
+            if (!db || !userId) return null;
+            // Path: /artifacts/{appId}/users/{userId}/stats/main
+            return doc(db, 'artifacts', appId, 'users', userId, 'stats', 'main');
+        }
+
+        function setupStatsListener() {
+            const statsRef = getStatsRef();
+            if (!statsRef) return;
+
+            // Initialize stats if they don't exist
+            getDoc(statsRef).then(docSnap => {
+                if (!docSnap.exists()) {
+                    setDoc(statsRef, { solvedCount: 0, errorCount: 0 });
+                }
+            }).catch(e => console.error("Error initializing stats:", e));
+
+            // Real-time listener
+            onSnapshot(statsRef, (doc) => {
+                const stats = doc.data() || { solvedCount: 0, errorCount: 0 };
+                document.getElementById('solved-counter').textContent = stats.solvedCount;
+                document.getElementById('error-counter').textContent = stats.errorCount;
+            });
+        }
+
+        async function updateStats(fieldToIncrement) {
+            const statsRef = getStatsRef();
+            if (!statsRef) return;
+            
+            const docSnap = await getDoc(statsRef);
+            let data = docSnap.data() || { solvedCount: 0, errorCount: 0 };
+
+            if (fieldToIncrement === 'solved') {
+                data.solvedCount = (data.solvedCount || 0) + 1;
+            } else if (fieldToIncrement === 'error') {
+                data.errorCount = (data.errorCount || 0) + 1;
+            }
+
+            try {
+                await setDoc(statsRef, data);
+            } catch (e) {
+                console.error("Error updating stats: ", e);
+            }
+        }
+
+
+        // --- APPLICATION LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- CONFIGURACIÓN Y ESTADO INICIAL ---
+            const state = {
+                currentPhase: 1, 
+                equation: {}, // Se llenará con generateEquation
+            };
+
+            const elements = {
+                containers: {
+                    1: document.getElementById('phase-1-container'),
+                    2: document.getElementById('phase-2-container'),
+                    3: document.getElementById('phase-3-container'),
+                    4: document.getElementById('phase-4-container'),
+                },
+                flags: {
+                    1: document.getElementById('flag-1'),
+                    2: document.getElementById('flag-2'),
+                    3: document.getElementById('flag-3'),
+                },
+                feedback: {
+                    1: document.getElementById('feedback-1'),
+                    2: document.getElementById('feedback-2'),
+                    3: document.getElementById('feedback-3'),
+                },
+                inputs: {
+                    2: document.getElementById('input-phase-2'),
+                    3: document.getElementById('input-phase-3'), // Input para N en Fase 3/Paso 4
+                },
+                buttons: {
+                    selectLeft: document.getElementById('select-left-btn'),
+                    selectRight: document.getElementById('select-right-btn'),
+                    check2: document.getElementById('check-phase-2-btn'),
+                    check3: document.getElementById('check-phase-3-btn'),
+                    reset: document.getElementById('reset-btn'),
+                },
+                display: {
+                    fullEquation: document.getElementById('full-equation-display'),
+                    p1LeftContainer: document.getElementById('p1-left-container'),
+                    p1RightContainer: document.getElementById('p1-right-container'),
+                    p1LeftSide: document.getElementById('display-left-side'), // P1
+                    p1RightSide: document.getElementById('display-right-side'), // P1
+                    
+                    p2LeftDisplay: document.getElementById('p2-left-display'),
+                    p2RightDisplay: document.getElementById('p2-right-display'),
+                    alignmentWrapper: document.getElementById('alignment-wrapper'),
+
+                    p3SimplifiedDisplay: document.getElementById('p3-simplified-display'),
+                    p4FinalBalanceDisplay: document.getElementById('p4-final-balance-display'),
+                    finalAnswer: document.getElementById('final-answer-display'), // P4
+                }
+            };
+
+            // --- TONE.JS (Sonido) ---
+            const synth = new Tone.Synth().toDestination();
+
+            /** Reproduce un sonido según la respuesta sea correcta o incorrecta. */
+            function playSound(isCorrect) {
+                if (Tone.context.state !== 'running') {
+                    Tone.start().catch(e => console.error("Tone.js start failed:", e));
+                }
+
+                if (isCorrect) {
+                    synth.triggerAttackRelease('C5', '8n', Tone.now());
+                    synth.triggerAttackRelease('E5', '8n', Tone.now() + 0.2);
+                } else {
+                    synth.triggerAttackRelease('C2', '4n');
+                }
+            }
+
+            /** Actualiza el estado visual de la bandera y el mensaje de retroalimentación. */
+            function updateFlag(phase, isCorrect, message) {
+                const flagEl = elements.flags[phase];
+                const feedbackEl = elements.feedback[phase];
+
+                if (isCorrect) {
+                    flagEl.classList.remove('flag-red', 'bg-orange-500');
+                    flagEl.classList.add('flag-green');
+                    feedbackEl.textContent = '¡Correcto! ' + message;
+                    feedbackEl.classList.remove('text-red-500');
+                    feedbackEl.classList.add('text-green-600');
+                } else {
+                    flagEl.classList.remove('flag-green', 'bg-orange-500');
+                    flagEl.classList.add('flag-red');
+                    feedbackEl.textContent = 'Incorrecto. ' + message;
+                    feedbackEl.classList.remove('text-green-600');
+                    feedbackEl.classList.add('text-red-500');
+                    updateStats('error'); // Registrar error
+                }
+                playSound(isCorrect);
+            }
+
+            /** Muestra el contenedor de la fase actual y deja visibles las anteriores. */
+            function showPhase(phase) {
+                Object.values(elements.containers).forEach((el, index) => {
+                    const phaseNum = index + 1;
+                    if (phaseNum >= phase) {
+                        el.style.display = 'none'; // Oculta todas las fases futuras
+                    }
+                });
+
+                const currentContainer = elements.containers[phase];
+                if (currentContainer) {
+                    currentContainer.style.display = 'block';
+                    state.currentPhase = phase;
+                    
+                    setTimeout(() => {
+                        currentContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 50);
+                }
+            }
+
+            /** Genera una ecuación en el formato: SideA = SideB, donde uno de los lados es complejo (C_A OP C_B) */
+            function generateEquation() {
+                const N = Math.floor(Math.random() * 6) + 3; // N (Answer) entre 3 y 8
+                const C_Var = Math.floor(Math.random() * 6) + 3; // Constante junto a N entre 3 y 8
+                const R = N + C_Var; // Resultado simplificado (e.g., if N=5, C_Var=4, R=9)
+
+                const simplifyOp = Math.random() < 0.5 ? '+' : '-'; // 50% chance for + or -
+                
+                let C_A, C_B;
+
+                if (simplifyOp === '+') {
+                    // C_A + C_B = R
+                    // Must ensure C_A and C_B are > 0.
+                    C_A = Math.floor(Math.random() * (R - 2)) + 1; // C_A between 1 and R-2
+                    C_B = R - C_A;
+                } else {
+                    // C_A - C_B = R
+                    // C_A must be > R. Let C_B be small (1-5)
+                    C_B = Math.floor(Math.random() * 5) + 1; // C_B between 1 and 5
+                    C_A = R + C_B; // C_A is guaranteed to be > R and > C_B
+                }
+
+                const simplifySide = Math.random() < 0.5 ? 'right' : 'left'; // 50% chance
+
+                let equation = {
+                    N: N,
+                    C_Var: C_Var,
+                    C_A: C_A,
+                    C_B: C_B,
+                    R: R,
+                    OP: simplifyOp,
+                    simplifySide: simplifySide,
+                };
+                
+                // Definir los contenidos de cada lado
+                const complexContent = `${C_A} ${equation.OP} ${C_B}`;
+                const simpleContent = `N + ${C_Var}`;
+                const simpleContentNFirst = `N + ${C_Var}`; // Aseguramos el orden en P4
+
+                if (simplifySide === 'right') {
+                    // Format: N + C_Var = C_A OP C_B
+                    equation.leftSide = simpleContent;
+                    equation.rightSide = complexContent;
+                    equation.fullEquation = `${simpleContent} = ${complexContent}`;
+                    equation.fixedContent = simpleContent; // Lado fijo (con N)
+                    equation.complexContent = complexContent; // Lado a simplificar
+                } else {
+                    // Format: C_A OP C_B = N + C_Var
+                    equation.leftSide = complexContent;
+                    equation.rightSide = simpleContent;
+                    equation.fullEquation = `${complexContent} = ${simpleContent}`;
+                    equation.fixedContent = simpleContent; // Lado fijo (con N)
+                    equation.complexContent = complexContent; // Lado a simplificar
+                }
+
+                equation.simplifiedLeft = simplifySide === 'left' ? R : simpleContentNFirst;
+                equation.simplifiedRight = simplifySide === 'right' ? R : simpleContentNFirst;
+
+                return equation;
+            }
+
+            /** Genera el HTML de la parte compleja (C_A + OP + C_B) para P2, con el highlight visual */
+            function generateComplexSideHTML(eq) {
+                return `
+                    <div class="complex-side-highlight">
+                        <div id="constants-side-to-solve" class="flex space-x-1">
+                            <span id="c-a-val" class="text-blue-600 font-bold">${eq.C_A}</span>
+                            <span id="op-val" class="text-blue-600 font-bold">${eq.OP}</span>
+                            <span id="c-b-val" class="text-blue-600 font-bold">${eq.C_B}</span>
+                        </div>
+                    </div>`;
+            }
+
+            /** Genera el HTML del lado fijo (N + C_Var) para P2 */
+            function generateFixedSideHTML(eq) {
+                 return `
+                    <div class="flex space-x-1">
+                        <span class="text-green-600 font-bold">N</span>
+                        <span class="text-green-600 font-bold">+</span>
+                        <span class="text-green-600 font-bold">${eq.C_Var}</span>
+                    </div>`;
+            }
+
+            /** Genera el HTML para la caja de input de simplificación */
+            function generateAlignmentHTML() {
+                return `
+                    <div class="flex flex-col items-center w-auto">
+                        <!-- Caja de resultado (Input) -->
+                        <input type="number" id="input-phase-2" placeholder="Resultado" class="equation-box input-box text-center focus:ring-4 focus:ring-yellow-500/50 focus:border-yellow-600 w-32 mt-4">
+                    </div>`;
+            }
+
+
+            // --- LÓGICA DE MANEJO DE EVENTOS ---
+
+            // Fase 1: Selección del lado a simplificar
+            elements.buttons.selectLeft.addEventListener('click', () => handlePhase1('left'));
+            elements.buttons.selectRight.addEventListener('click', () => handlePhase1('right'));
+
+            function handlePhase1(selection) {
+                const isCorrect = selection === state.equation.simplifySide; 
+                
+                if (isCorrect) {
+                    updateFlag(1, true, `¡Correcto! Simplificamos el Lado ${selection === 'left' ? 'Izquierdo' : 'Derecho'}.`);
+                    elements.buttons.selectLeft.disabled = true;
+                    elements.buttons.selectRight.disabled = true;
+                    
+                    // Configurar Phase 2 Display
+                    const isSimplifyingRight = state.equation.simplifySide === 'right';
+                    
+                    // Contenido del lado fijo (N + C_Var)
+                    const fixedSideHTML = generateFixedSideHTML(state.equation);
+                    // Contenido del lado complejo (C_A OP C_B)
+                    const complexSideHTML = generateComplexSideHTML(state.equation);
+                    // Input y caja de resultado
+                    const alignmentHTML = generateAlignmentHTML();
+
+                    if (isSimplifyingRight) {
+                        // N + C_Var = C_A OP C_B
+                        elements.display.p2LeftDisplay.innerHTML = fixedSideHTML;
+                        elements.display.p2RightDisplay.innerHTML = complexSideHTML;
+                        // Alineación: Placeholder invisible para el lado izquierdo + la solución alineada a la derecha
+                        elements.display.alignmentWrapper.innerHTML = `
+                            <div class="invisible-align text-3xl font-extrabold space-x-3 w-1/2 justify-end" aria-hidden="true">${state.equation.fixedContent} =</div>
+                            <div class="flex justify-center w-1/2">${alignmentHTML}</div>
+                        `;
+
+                    } else {
+                        // C_A OP C_B = N + C_Var
+                        elements.display.p2LeftDisplay.innerHTML = complexSideHTML;
+                        elements.display.p2RightDisplay.innerHTML = fixedSideHTML;
+                        // Alineación: La solución alineada a la izquierda + Placeholder invisible para el lado derecho
+                        elements.display.alignmentWrapper.innerHTML = `
+                            <div class="flex justify-center w-1/2">${alignmentHTML}</div>
+                            <div class="invisible-align text-3xl font-extrabold space-x-3 w-1/2 justify-start" aria-hidden="true">= ${state.equation.fixedContent}</div>
+                        `;
+                    }
+
+                    // Necesitamos reasignar el input después de inyectar el HTML
+                    elements.inputs[2] = document.getElementById('input-phase-2');
+                    
+                    setTimeout(() => { showPhase(2); }, 1000);
+                } else {
+                    updateFlag(1, false, 'Inténtalo de nuevo. Simplifica el lado que no tiene la variable N.');
+                }
+            }
+
+            // Fase 2: Resolver el lado de constantes (C_A OP C_B = R)
+            elements.buttons.check2.addEventListener('click', () => {
+                const userInput = parseInt(elements.inputs[2].value);
+                const isCorrect = userInput === state.equation.R;
+
+                if (isCorrect) {
+                    updateFlag(2, true, `¡Muy bien! ${state.equation.complexContent} es igual a ${state.equation.R}.`);
+                    elements.inputs[2].disabled = true;
+                    elements.buttons.check2.disabled = true;
+                    
+                    // Configurar Phase 3 Display (Ecuación Simplificada, Paso 3)
+                    const N_plus_C = `N + ${state.equation.C_Var}`;
+                    const R_val = state.equation.R;
+                    
+                    // Mostrar la ecuación simplificada (R = N + C_Var o N + C_Var = R)
+                    elements.display.p3SimplifiedDisplay.innerHTML = `
+                        <span class="text-purple-600">${state.equation.simplifiedLeft}</span>
+                        <span class="text-gray-800">=</span>
+                        <span class="text-purple-600">${state.equation.simplifiedRight}</span>
+                    `;
+
+                    // Configurar Phase 4 Display (Balanceo, Paso 4)
+                    // NOTA: Para el paso 4, siempre volvemos al formato N + C = R con N como input.
+                    elements.display.p4FinalBalanceDisplay.innerHTML = `
+                        <input type="number" id="input-phase-3" placeholder="N" value="" class="equation-box input-box text-center focus:ring-4 focus:ring-yellow-500/50 focus:border-yellow-600 w-20">
+                        <span class="text-gray-800">+</span>
+                        <span id="display-constant-left-interactive" class="text-green-600 font-bold">${state.equation.C_Var}</span> 
+                        <span class="text-gray-800">=</span>
+                        <span id="display-result-right-interactive" class="text-blue-600 font-bold">${R_val}</span>
+                    `;
+
+                    // Reasignar el input de Fase 3
+                    elements.inputs[3] = document.getElementById('input-phase-3');
+                    
+                    setTimeout(() => showPhase(3), 1000);
+                } else {
+                    updateFlag(2, false, `Revisa la operación de ${state.equation.complexContent}.`);
+                }
+            });
+
+            // Fase 3: Solución final (N + C_Var = R)
+            elements.buttons.check3.addEventListener('click', () => {
+                const userInput = parseInt(elements.inputs[3].value);
+                const isCorrect = userInput === state.equation.N;
+
+                if (isCorrect) {
+                    updateFlag(3, true, `¡Respuesta final correcta! N es ${state.equation.N}.`);
+                    elements.inputs[3].disabled = true;
+                    elements.buttons.check3.disabled = true;
+                    
+                    elements.display.finalAnswer.textContent = state.equation.N;
+                    updateStats('solved'); // Registrar problema resuelto
+
+                    setTimeout(() => showPhase(4), 1000);
+                } else {
+                    updateFlag(3, false, `Revisa tu balanceo. ¿Qué número sumado a ${state.equation.C_Var} es igual a ${state.equation.R}?`);
+                }
+            });
+
+            // Botón de Reinicio
+            elements.buttons.reset.addEventListener('click', resetPractice);
+
+            /** Reinicia la aplicación a su estado inicial. */
+            function resetPractice() {
+                state.equation = generateEquation();
+
+                // 2. Resetear Flags y Feedback
+                Object.values(elements.flags).forEach(el => {
+                    el.classList.remove('flag-green', 'flag-red');
+                    el.classList.add('bg-orange-500');
+                });
+                Object.values(elements.feedback).forEach(el => el.textContent = '');
+
+                // 3. Resetear Inputs y Habilitar
+                Object.values(elements.inputs).forEach(el => {
+                    if (el) { // Verificar si el elemento existe (input-phase-3 se crea dinámicamente)
+                        el.value = '';
+                        el.disabled = false;
+                    }
+                });
+                
+                // 4. Habilitar Botones
+                elements.buttons.selectLeft.disabled = false;
+                elements.buttons.selectRight.disabled = false;
+                elements.buttons.check2.disabled = false;
+                elements.buttons.check3.disabled = false;
+
+                // 5. Reiniciar el Display con la nueva ecuación (P1)
+                elements.display.fullEquation.textContent = state.equation.fullEquation;
+                elements.display.p1LeftSide.textContent = state.equation.leftSide;
+                elements.display.p1RightSide.textContent = state.equation.rightSide;
+
+                // Aplicar color de borde/fondo según la parte compleja
+                if (state.equation.simplifySide === 'left') {
+                    elements.display.p1LeftContainer.classList.add('border-blue-400', 'bg-blue-50/50');
+                    elements.display.p1LeftContainer.classList.remove('border-green-400', 'bg-green-50/50');
+                    elements.display.p1RightContainer.classList.add('border-green-400', 'bg-green-50/50');
+                    elements.display.p1RightContainer.classList.remove('border-blue-400', 'bg-blue-50/50');
+                } else {
+                    elements.display.p1LeftContainer.classList.add('border-green-400', 'bg-green-50/50');
+                    elements.display.p1LeftContainer.classList.remove('border-blue-400', 'bg-blue-50/50');
+                    elements.display.p1RightContainer.classList.add('border-blue-400', 'bg-blue-50/50');
+                    elements.display.p1RightContainer.classList.remove('border-green-400', 'bg-green-50/50');
+                }
+
+                // Limpiar displays de fases posteriores
+                elements.display.p2LeftDisplay.innerHTML = '';
+                elements.display.p2RightDisplay.innerHTML = '';
+                elements.display.alignmentWrapper.innerHTML = '';
+                elements.display.p3SimplifiedDisplay.innerHTML = '';
+                elements.display.p4FinalBalanceDisplay.innerHTML = '';
+                elements.display.finalAnswer.textContent = '';
+
+
+                // 6. Mostrar Fase 1
+                showPhase(1);
+            }
+
+            // Iniciar la práctica al cargar
+            resetPractice();
+
+        });
+    </script>
+</body>
+</html>
