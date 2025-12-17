@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Práctica de Resolución de Problemas (180 Ejercicios)</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de Tone.js para efectos de sonido (explosion y error) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    
+    <!-- Configuración para usar la fuente Inter y estilos básicos -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* Estilos para las cajas de entrada (las "cajas amarillas") */
+        .problem-input {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border: 3px solid #fcd34d; /* Amarillo principal */
+            background-color: #fef3c7; /* Amarillo claro */
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .correct {
+            background-color: #d1fae5; /* Verde claro */
+            border-color: #10b981; /* Verde fuerte */
+        }
+        .incorrect {
+            background-color: #fee2e2; /* Rojo claro */
+            border-color: #ef4444; /* Rojo fuerte */
+        }
+        .speaker-icon {
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .speaker-icon:active {
+            transform: scale(0.95);
+        }
+        /* Estilos para el botón de verificación */
+        .check-button {
+            padding: 1rem 2rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            background-color: #10b981;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease-in-out;
+        }
+        .check-button:hover:not(:disabled) {
+            background-color: #059669;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .check-button:active:not(:disabled) {
+            transform: translateY(2px);
+        }
+        .check-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <!-- Canvas para la simulación de fuegos artificiales -->
+    <canvas id="fireworks-canvas" class="fixed top-0 left-0 w-full h-full pointer-events-none z-50 hidden"></canvas>
+
+    <!-- Icono de Error (Pulgar abajo) -->
+    <div id="error-icon" class="fixed inset-0 flex items-center justify-center z-[100] pointer-events-none hidden">
+        <!-- El 👎 se anima con CSS/JS -->
+        <span class="text-9xl transform transition-transform duration-300 scale-0 opacity-0 bg-white p-6 rounded-full shadow-2xl">
+            👎
+        </span>
+    </div>
+
+    <div class="max-w-4xl mx-auto bg-white p-6 md:p-10 rounded-xl shadow-2xl relative z-10">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Resolución de Problemas Matemáticos</h1>
+        <p id="problem-counter" class="text-lg font-medium text-indigo-600 mb-4 text-center">Problema 1 de 180</p>
+        <p class="text-gray-600 mb-8 text-center">Haz clic en los íconos de bocina para escuchar el problema y luego forma la ecuación y resuélvela.</p>
+
+        <!-- PASO 1: Descomposición del Problema (Texto y Audio) -->
+        <div id="step-1" class="mb-10 p-4 border-b-2 border-indigo-200">
+            <h2 class="text-xl font-semibold text-indigo-700 mb-4">PASO 1: Comprender el Problema</h2>
+
+            <div class="space-y-4">
+                <!-- Parte 1 -->
+                <div class="flex items-center bg-gray-50 p-3 rounded-lg shadow-sm">
+                    <span id="text-1" class="flex-grow text-lg text-gray-700">...</span>
+                    <button class="speaker-icon p-2 ml-4 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
+                            onclick="speakText('text-1', 'es-ES')" aria-label="Reproducir audio para la Parte 1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H1.5c-.276 0-.5-.224-.5-.5v-4c0-.276.224-.5.5-.5h4.086l5.914-5.914c.188-.188.46-.293.74-.293h.001c.28 0 .552.105.74.293l.001.001a1 1 0 010 1.414l-6.586 6.586a1 1 0 01-1.414 0z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Parte 2 -->
+                <div class="flex items-center bg-gray-50 p-3 rounded-lg shadow-sm">
+                    <span id="text-2" class="flex-grow text-lg text-gray-700">...</span>
+                    <button class="speaker-icon p-2 ml-4 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
+                            onclick="speakText('text-2', 'es-ES')" aria-label="Reproducir audio para la Parte 2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H1.5c-.276 0-.5-.224-.5-.5v-4c0-.276.224-.5.5-.5h4.086l5.914-5.914c.188-.188.46-.293.74-.293h.001c.28 0 .552.105.74.293l.001.001a1 1 0 010 1.414l-6.586 6.586a1 1 0 01-1.414 0z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Parte 3 -->
+                <div class="flex items-center bg-gray-50 p-3 rounded-lg shadow-sm">
+                    <span id="text-3" class="flex-grow text-lg text-gray-700">...</span>
+                    <button class="speaker-icon p-2 ml-4 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
+                            onclick="speakText('text-3', 'es-ES')" aria-label="Reproducir audio para la Parte 3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H1.5c-.276 0-.5-.224-.5-.5v-4c0-.276.224-.5.5-.5h4.086l5.914-5.914c.188-.188.46-.293.74-.293h.001c.28 0 .552.105.74.293l.001.001a1 1 0 010 1.414l-6.586 6.586a1 1 0 01-1.414 0z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PASO 2: Ecuación (Cajas Editables) -->
+        <div id="step-2" class="mb-10 p-4 border-b-2 border-indigo-200">
+            <h2 class="text-xl font-semibold text-indigo-700 mb-4">PASO 2: Escribir la Ecuación</h2>
+            <div class="flex flex-wrap justify-center items-center space-x-2 md:space-x-4">
+                <input type="text" id="eq-n1" class="problem-input" maxlength="2" placeholder="?" aria-label="Primer término">
+                <input type="text" id="eq-op" class="problem-input text-2xl" maxlength="1" placeholder="?" aria-label="Operador">
+                <input type="text" id="eq-n2" class="problem-input" maxlength="2" placeholder="?" aria-label="Segundo término">
+                <span class="text-3xl font-bold text-gray-700">=</span>
+                <input type="text" id="eq-var" class="problem-input text-2xl" maxlength="2" placeholder="?" aria-label="Resultado">
+            </div>
+        </div>
+
+        <!-- PASO 3: Solución (Cajas Editables) -->
+        <div id="step-3" class="mb-10 p-4">
+            <h2 class="text-xl font-semibold text-indigo-700 mb-4">PASO 3: Resolver y Concluir</h2>
+            <div class="flex flex-wrap justify-center items-center space-x-2 md:space-x-4">
+                <input type="text" id="sol-var" class="problem-input text-2xl" maxlength="1" placeholder="X" aria-label="Variable X">
+                <span class="text-3xl font-bold text-gray-700">=</span>
+                <input type="text" id="sol-res" class="problem-input" maxlength="2" placeholder="?" aria-label="Resultado numérico">
+            </div>
+        </div>
+
+        <!-- Botón de Verificación -->
+        <div class="flex justify-center">
+            <button id="check-btn" class="check-button" onclick="checkAnswers()">
+                Verificar Respuestas
+            </button>
+        </div>
+
+        <!-- Mensaje de Retroalimentación -->
+        <div id="feedback-message" class="mt-6 text-center text-lg font-semibold min-h-[30px]"></div>
+    </div>
+
+    <script>
+        // --- Variables de Estado Globales ---
+        let PROBLEMS = [];
+        let currentProblemIndex = 0;
+        let CURRENT_EXPECTED_ANSWERS = {}; 
+        const totalProblems = 180; 
+
+        // --- AUDIO (Tone.js) ---
+        let successSynth, errorSynth;
+
+        function initAudio() {
+            // Permitir que el audio se inicie con la interacción del usuario
+            if (Tone.start) {
+                document.documentElement.addEventListener('mousedown', () => Tone.start(), { once: true });
+                document.documentElement.addEventListener('touchstart', () => Tone.start(), { once: true });
+            }
+
+            // Sonido de Éxito (Explosión - acorde rápido y brillante)
+            successSynth = new Tone.PolySynth(Tone.Synth).toDestination();
+            successSynth.set({ 
+                oscillator: { type: 'sine' }, 
+                envelope: { attack: 0.01, decay: 0.2, sustain: 0.0, release: 0.5 } 
+            });
+
+            // Sonido de Error (Uh-uh - tono bajo)
+            errorSynth = new Tone.MembraneSynth({
+                pitchDecay: 0.05,
+                octaves: 4,
+                envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 },
+                volume: -5 
+            }).toDestination();
+        }
+
+        function playSuccessSound() {
+            successSynth.triggerAttackRelease(['C5', 'E5', 'G5'], '8n');
+        }
+
+        function playErrorSound() {
+            errorSynth.triggerAttackRelease('C2', '8n');
+        }
+
+        // --- FIREWORKS (Canvas) ---
+        let canvas, ctx, particles = [];
+        let animationFrameId;
+
+        function initFireworks() {
+            canvas = document.getElementById('fireworks-canvas');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                // Velocidad aleatoria para dispersión
+                this.vx = Math.random() * 4 - 2;
+                this.vy = Math.random() * 4 - 2;
+                this.alpha = 1;
+                this.gravity = 0.05;
+                this.friction = 0.99;
+                this.color = color;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.vy += this.gravity;
+                this.y += this.vy;
+                this.vx *= this.friction;
+                this.vy *= this.friction;
+                this.alpha -= 0.01; // Desaparece lentamente
+            }
+
+            draw() {
+                ctx.save();
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function createExplosion(x, y) {
+            const color = `hsl(${Math.random() * 360}, 100%, 50%)`; // Color aleatorio
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function animateFireworks() {
+            // Fondo semi-transparente para crear el efecto de cola
+            ctx.fillStyle = 'rgba(243, 244, 246, 0.05)'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            if (particles.length > 0) {
+                animationFrameId = requestAnimationFrame(animateFireworks);
+            } else {
+                // Cuando todos los fuegos artificiales se han desvanecido
+                canvas.classList.add('hidden');
+                cancelAnimationFrame(animationFrameId);
+            }
+        }
+
+        function startFireworks() {
+            canvas.classList.remove('hidden');
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            particles = []; 
+            
+            // Generar 3 a 5 explosiones aleatorias
+            const explosionCount = Math.floor(Math.random() * 3) + 3;
+            for(let i = 0; i < explosionCount; i++) {
+                const x = canvas.width * (0.2 + Math.random() * 0.6);
+                const y = canvas.height * (0.2 + Math.random() * 0.5);
+                createExplosion(x, y);
+            }
+            
+            animateFireworks();
+        }
+
+        // --- ERROR FEEDBACK (Pulgar Abajo) ---
+        function showErrorFeedback() {
+            const iconDiv = document.getElementById('error-icon');
+            const iconSpan = iconDiv.querySelector('span');
+            
+            iconDiv.classList.remove('hidden');
+            
+            // Animación de entrada (escala de 0 a 1)
+            setTimeout(() => {
+                iconSpan.classList.remove('scale-0', 'opacity-0');
+                iconSpan.classList.add('scale-100', 'opacity-100');
+            }, 10); 
+
+            // Animación de salida y ocultar
+            setTimeout(() => {
+                iconSpan.classList.remove('scale-100', 'opacity-100');
+                iconSpan.classList.add('scale-0', 'opacity-0');
+            }, 1000); 
+
+            setTimeout(() => {
+                iconDiv.classList.add('hidden');
+            }, 1300);
+        }
+        
+        // --- Configuracion de Problemas (Mantenida) ---
+        const names = ["Fabi", "Ester", "Carlos", "Ana", "Luis", "Sofia", "Jorge", "Laura", "Pedro", "Elena", "Daniel", "Marta", "Abi", "Mario", "Raúl", "Carmen", "David", "Rosa"];
+        const objects = ["gatos", "patos", "libros", "manzanas", "canicas", "lápices", "flores", "juguetes", "dulces", "galletas", "carros", "muñecas", "pájaros", "monedas", "peces", "globos", "estampas", "conchas"];
+
+        function getRandomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        // Templates de Problemas (mantenidas) ...
+        const additionTemplates = [
+            (name, object, n1, n2) => ({ p1: `${name} vio ${n1} ${object} en la mañana.`, p2: `Y luego vio ${n2} en la tarde.`, p3: `¿Cuántos ${object} vio ${name} al final del día?` }),
+            (name, object, n1, n2) => ({ p1: `${name} compró ${n1} ${object}.`, p2: `Su abuela le regaló ${n2} ${object} más.`, p3: `¿Con cuántos ${object} se quedó ${name} en total?` })
+        ];
+        const subtractionTemplates = [
+            (name1, name2, object, n1, n2) => ({ p1: `${name1} tenía ${n1} ${object}.`, p2: `Luego le dio ${n2} a ${name2}.`, p3: `¿Cuántos ${object} le quedan a ${name1}?` }),
+            (name1, name2, object, n1, n2) => ({ p1: `${name1} horneó ${n1} ${object}.`, p2: `Se comió ${n2} ${object}.`, p3: `¿Cuántos ${object} le quedan sin comer a ${name1}?` })
+        ];
+        const missingAddendMiddleTemplates = [
+            (name, object, n1, total) => ({ p1: `${name} tenía ${n1} ${object} en su colección.`, p2: `Su mamá le trajo algunos ${object} más.`, p3: `Ahora ${name} vio que hay ${total}. ¿Cuántos le trajo su mamá?` }),
+            (name, object, n1, total) => ({ p1: `Había ${n1} ${object} en la mesa.`, p2: `${name} puso unos cuantos ${object} más.`, p3: `Ahora hay ${total} en total. ¿Cuántos ${object} puso ${name}?` })
+        ];
+        const missingAddendStartTemplates = [
+            (name, object, n2, total) => ({ p1: `${name} tenía algunos ${object} en su caja.`, p2: `Su amigo le regaló ${n2} ${object} más.`, p3: `Ahora ${name} tiene ${total}. ¿Cuántos ${object} tenía al principio?` }),
+            (name, object, n2, total) => ({ p1: `Había algunos ${object} en el árbol.`, p2: `Llegaron ${n2} ${object} volando.`, p3: `Ahora se cuentan ${total}. ¿Cuántos ${object} había antes?` })
+        ];
+        const missingSubtrahendStartTemplates = [
+            (name, object, n2, result) => ({ p1: `${name} tenía algunos ${object} al empezar el día.`, p2: `Regaló ${n2} ${object} a sus amigos.`, p3: `Le quedaron ${result} ${object}. ¿Cuántos ${object} tenía ${name} al principio?` }),
+            (name, object, n2, result) => ({ p1: `Había una cantidad desconocida de ${object} en la nevera.`, p2: `Se usaron ${n2} ${object} para hacer un pastel.`, p3: `Ahora quedan ${result} ${object}. ¿Cuántos ${object} había inicialmente?` })
+        ];
+        const missingSubtrahendMiddleTemplates = [
+            (name, object, n1, result) => ({ p1: `${name} tenía ${n1} ${object} guardados.`, p2: `Perdió una cantidad de ${object} jugando.`, p3: `Si le quedan ${result} ${object}, ¿cuántos ${object} perdió?` }),
+            (name, object, n1, result) => ({ p1: `Se prepararon ${n1} ${object}.`, p2: `Algunos ${object} fueron vendidos.`, p3: `Quedaron ${result} ${object}. ¿Cuántos ${object} se vendieron?` })
+        ];
+
+        function generateProblems(count) {
+            const generatedProblems = [];
+            const countPerType = count / 6;
+
+            // 1. Resta Estándar (8 - 3 = x)
+            for (let i = 0; i < countPerType; i++) {
+                let n1 = Math.floor(Math.random() * 6) + 5; 
+                let n2 = Math.floor(Math.random() * (n1 - 1)) + 1;
+                let result = n1 - n2;
+                const { p1, p2, p3 } = getRandomItem(subtractionTemplates)(getRandomItem(names), getRandomItem(names), getRandomItem(objects), n1, n2);
+                generatedProblems.push({ type: 'standard_sub', p1, p2, p3, n1, op: '-', n2, var: 'x', solVar: 'x', solRes: result });
+            }
+
+            // 2. Suma Estándar (4 + 5 = x)
+            for (let i = 0; i < countPerType; i++) {
+                let n1 = Math.floor(Math.random() * 10) + 1;
+                let n2 = Math.floor(Math.random() * 10) + 1;
+                let result = n1 + n2;
+                const { p1, p2, p3 } = getRandomItem(additionTemplates)(getRandomItem(names), getRandomItem(objects), n1, n2);
+                generatedProblems.push({ type: 'standard_add', p1, p2, p3, n1, op: '+', n2, var: 'x', solVar: 'x', solRes: result });
+            }
+
+            // 3. Suma Incógnita Medio (4 + x = 12)
+            for (let i = 0; i < countPerType; i++) {
+                let n1 = Math.floor(Math.random() * 8) + 2; 
+                let x = Math.floor(Math.random() * 8) + 2;
+                let total = n1 + x;
+                const { p1, p2, p3 } = getRandomItem(missingAddendMiddleTemplates)(getRandomItem(names), getRandomItem(objects), n1, total);
+                generatedProblems.push({ type: 'missing_add_mid', p1, p2, p3, n1: n1, op: '+', n2: 'x', var: total, solVar: 'x', solRes: x });
+            }
+
+            // 4. Suma Incógnita Inicio (x + 5 = 12)
+            for (let i = 0; i < countPerType; i++) {
+                let x = Math.floor(Math.random() * 8) + 2; 
+                let n2 = Math.floor(Math.random() * 8) + 2; 
+                let total = x + n2; 
+                const { p1, p2, p3 } = getRandomItem(missingAddendStartTemplates)(getRandomItem(names), getRandomItem(objects), n2, total);
+                generatedProblems.push({ type: 'missing_add_start', p1, p2, p3, n1: 'x', op: '+', n2: n2, var: total, solVar: 'x', solRes: x });
+            }
+
+            // 5. Resta Incógnita Inicio (x - 5 = 3)
+            for (let i = 0; i < countPerType; i++) {
+                let n2 = Math.floor(Math.random() * 5) + 2; 
+                let result = Math.floor(Math.random() * 5) + 2; 
+                let x = n2 + result; 
+                const { p1, p2, p3 } = getRandomItem(missingSubtrahendStartTemplates)(getRandomItem(names), getRandomItem(objects), n2, result);
+                generatedProblems.push({ type: 'missing_sub_start', p1, p2, p3, n1: 'x', op: '-', n2: n2, var: result, solVar: 'x', solRes: x });
+            }
+
+            // 6. Resta Incógnita Medio (8 - x = 3)
+            for (let i = 0; i < countPerType; i++) {
+                let result = Math.floor(Math.random() * 5) + 2; 
+                let x = Math.floor(Math.random() * 5) + 2; 
+                let n1 = result + x; 
+                const { p1, p2, p3 } = getRandomItem(missingSubtrahendMiddleTemplates)(getRandomItem(names), getRandomItem(objects), n1, result);
+                generatedProblems.push({ type: 'missing_sub_mid', p1, p2, p3, n1: n1, op: '-', n2: 'x', var: result, solVar: 'x', solRes: x });
+            }
+
+            // Mezclar (Shuffle) todos los 180 problemas
+            for (let i = generatedProblems.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [generatedProblems[i], generatedProblems[j]] = [generatedProblems[j], generatedProblems[i]];
+            }
+
+            return generatedProblems;
+        }
+
+        // --- TTS y Configuración ---
+        const TTS = {
+            synth: window.speechSynthesis,
+            spanishVoice: null,
+            isSupported: 'speechSynthesis' in window,
+            init: function() {
+                if (!this.isSupported) return;
+                if (this.synth.getVoices().length === 0) {
+                    this.synth.onvoiceschanged = () => this.setSpanishVoice();
+                } else {
+                    this.setSpanishVoice();
+                }
+            },
+            setSpanishVoice: function() {
+                const voices = this.synth.getVoices();
+                this.spanishVoice = voices.find(voice => voice.lang === 'es-ES' || voice.lang.startsWith('es-'));
+            },
+            speak: function(text, lang) {
+                if (!this.isSupported || this.synth.speaking) return;
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang;
+                if (this.spanishVoice) utterance.voice = this.spanishVoice;
+                this.synth.speak(utterance);
+            }
+        };
+
+        function speakText(elementId, lang) {
+            const text = document.getElementById(elementId).textContent.trim();
+            TTS.speak(text, lang);
+        }
+
+        // --- Lógica Principal ---
+        function loadProblem(index) {
+            if (index >= PROBLEMS.length) {
+                document.querySelector('.max-w-4xl').innerHTML = `
+                    <div class="p-10 text-center">
+                        <h2 class="text-4xl font-bold text-indigo-700 mb-4">¡Felicidades!</h2>
+                        <p class="text-xl text-gray-700">Has completado los ${PROBLEMS.length} ejercicios.</p>
+                        <button class="check-button mt-6" onclick="location.reload()">Reiniciar</button>
+                    </div>`;
+                return;
+            }
+            
+            // Resetear inputs
+            ['eq-n1', 'eq-op', 'eq-n2', 'eq-var', 'sol-var', 'sol-res'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) { el.value = ''; el.classList.remove('correct', 'incorrect'); }
+            });
+            document.getElementById('feedback-message').textContent = '';
+            document.getElementById('check-btn').disabled = false;
+
+            const p = PROBLEMS[index];
+            document.getElementById('problem-counter').textContent = `Problema ${index + 1} de ${PROBLEMS.length}`;
+            
+            // Cargar textos
+            document.getElementById('text-1').textContent = p.p1;
+            document.getElementById('text-2').textContent = p.p2;
+            document.getElementById('text-3').textContent = p.p3;
+
+            // Cargar respuestas esperadas
+            CURRENT_EXPECTED_ANSWERS = {
+                'eq-n1': String(p.n1),
+                'eq-op': p.op,
+                'eq-n2': String(p.n2),
+                'eq-var': String(p.var),
+                'sol-var': String(p.solVar),
+                'sol-res': String(p.solRes)
+            };
+        }
+        
+        function checkInput(inputElement, correctValue) {
+            let userValue = inputElement.value.trim().toLowerCase();
+            // Normalizar eliminando espacios
+            if (['eq-n1', 'eq-op', 'eq-n2', 'eq-var', 'sol-var'].includes(inputElement.id)) {
+                userValue = userValue.replace(/\s/g, '');
+            }
+            
+            const isCorrect = userValue === correctValue.toLowerCase();
+            inputElement.classList.remove('correct', 'incorrect');
+            if (isCorrect) inputElement.classList.add('correct');
+            else if (userValue !== '') inputElement.classList.add('incorrect');
+            
+            return isCorrect;
+        }
+
+        function checkAnswers() {
+            let allCorrect = true;
+            ['eq-n1', 'eq-op', 'eq-n2', 'eq-var', 'sol-var', 'sol-res'].forEach(id => {
+                if (!checkInput(document.getElementById(id), CURRENT_EXPECTED_ANSWERS[id])) allCorrect = false;
+            });
+
+            const fb = document.getElementById('feedback-message');
+            fb.classList.remove('text-green-600', 'text-red-600');
+
+            if (allCorrect) {
+                // --- FEEDBACK DE ÉXITO ---
+                playSuccessSound();
+                startFireworks();
+                
+                fb.textContent = "¡Muy bien! Siguiente ejercicio...";
+                fb.classList.add('text-green-600');
+                document.getElementById('check-btn').disabled = true;
+                
+                // Esperar a que el sonido y la animación terminen antes de cargar el siguiente
+                setTimeout(() => {
+                    currentProblemIndex++;
+                    loadProblem(currentProblemIndex);
+                }, 2500); 
+            } else {
+                // --- FEEDBACK DE ERROR ---
+                playErrorSound();
+                showErrorFeedback();
+                
+                fb.textContent = "Revisa los cuadros rojos.";
+                fb.classList.add('text-red-600');
+            }
+        }
+
+        window.onload = () => {
+            TTS.init();
+            initAudio(); 
+            initFireworks();
+            PROBLEMS = generateProblems(totalProblems); 
+            loadProblem(currentProblemIndex);
+        };
+    </script>
+</body>
+</html>
