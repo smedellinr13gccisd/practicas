@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-MX">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -86,6 +86,8 @@
             margin-top: 10px;
         }
 
+        .syllable-options input[type="radio"] { display: none; }
+
         .syllable-options label {
             width: 95px;
             height: 95px;
@@ -98,21 +100,50 @@
             font-size: 2.2em;
             font-weight: 900;
             cursor: pointer;
+            transition: all 0.2s;
             color: var(--color-text);
         }
 
-        .syllable-options input[type="radio"] { display: none; }
         .syllable-options label.disabled { pointer-events: none; opacity: 0.5; }
+
         input:checked + label.correct { border-color: var(--color-success); background-color: #e8f5e9; transform: scale(1.05); }
         input:checked + label.incorrect { border-color: var(--color-error); background-color: #ffebee; }
 
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 2000; }
-        .modal-content { background: white; padding: 40px; border-radius: 20px; text-align: center; max-width: 85%; }
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 85%;
+        }
+
         .modal-success p { color: var(--color-success); font-size: 2em; font-weight: bold; }
         .modal-error p { color: var(--color-error); font-size: 2em; font-weight: bold; }
-        #modal-action-btn { margin-top: 25px; padding: 15px 45px; border: none; border-radius: 12px; color: white; font-size: 1.3em; font-weight: bold; cursor: pointer; }
+
+        #modal-action-btn {
+            margin-top: 25px;
+            padding: 15px 45px;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         .modal-success #modal-action-btn { background-color: var(--color-success); }
         .modal-error #modal-action-btn { background-color: var(--color-error); }
+
         .hidden { display: none; }
     </style>
 </head>
@@ -132,7 +163,7 @@
 
         <main>
             <button id="play-syllable-btn"><i class="fas fa-volume-up"></i></button>
-            <p class="instruction">Toca la bocina para escuchar</p>
+            <p class="instruction" id="main-instruction">Toca la bocina para escuchar</p>
             <form id="syllable-options" class="syllable-options"></form>
         </main>
     </div>
@@ -157,12 +188,9 @@
         ];
 
         let currentCorrectSyllable = '';
-        let completedCount = 0;
-        let errorCount = 0;
-        let totalAttempts = 0;
+        let completedCount = 0, errorCount = 0, totalAttempts = 0;
         let preferredVoice = null;
-        let isInitialized = false;
-        let startTime = Date.now();
+        let isInitialized = false, startTime = Date.now();
         let timerInterval, secondsElapsed = 0, timerStarted = false;
 
         const optionsArea = document.getElementById('syllable-options');
@@ -188,11 +216,11 @@
 
         function setPreferredVoice() {
             const voices = speechSynthesis.getVoices();
-            const targetVoiceNames = [/sandra/i, /sofía/i, /ximena/i, /carmen/i, /teresa/i, /paulina/i, /niña/i, /mujer/i, /female/i];
-            const spanishVoices = voices.filter(voice => voice.lang.startsWith('es'));
-            let clearVoice = spanishVoices.find(voice => targetVoiceNames.some(regex => regex.test(voice.name)));
-            if (!clearVoice) clearVoice = spanishVoices.find(voice => voice.lang === 'es-MX');
-            preferredVoice = clearVoice || spanishVoices[0] || null;
+            // Prioridad absoluta a voces Mexicanas
+            let clearVoice = voices.find(v => v.lang === 'es-MX' && /Paulin|Ximen|Sofi|Susa/i.test(v.name));
+            if (!clearVoice) clearVoice = voices.find(v => v.lang === 'es-MX');
+            if (!clearVoice) clearVoice = voices.find(v => v.lang.startsWith('es'));
+            preferredVoice = clearVoice || null;
         }
 
         if (speechSynthesis.onvoiceschanged !== undefined) {
@@ -204,39 +232,23 @@
             if (!syllable) return;
             if (speechSynthesis.speaking) speechSynthesis.cancel();
 
-            // --- EL GRAN ARREGLO PARA EL IPAD ---
-            // Si enviamos "ne", dice "noreste". 
-            // Si enviamos "ne-e", el motor de voz se ve obligado a procesar la sílaba y no la sigla.
-            // La letra 'h' intercalada o repetir la vocal con un guion bajo ayuda a romper el diccionario.
+            // --- SOLUCIÓN FINAL DE PRONUNCIACIÓN ---
+            // 1. Convertimos a minúsculas.
+            // 2. Usamos el formato "la." (sílaba + punto). El punto fuerza al motor es-MX a no leer siglas.
+            // 3. El iPad no dirá "Noreste" si el texto es "ne." porque el punto indica fin de palabra.
             
-            let phoneticText = syllable.toLowerCase();
-            
-            // Diccionario de excepciones críticas para iOS
-            const fix = {
-                "ne": "ne_e",
-                "vo": "vo_o",
-                "ud": "u_d",
-                "id": "i_d",
-                "om": "o_m",
-                "ba": "ba_a",
-                "ef": "e_f"
-            };
-
-            const textToSpeak = fix[phoneticText] || phoneticText;
-            
+            const textToSpeak = syllable.toLowerCase() + "."; 
             const utterance = new SpeechSynthesisUtterance(textToSpeak);
-            utterance.rate = 0.65; // Más lento para que la 'o' sea 'o' y no 'u'
-            utterance.pitch = phoneticText.includes('o') ? 0.9 : 1.1;
             
-            if (preferredVoice) {
-                utterance.voice = preferredVoice;
-                utterance.lang = preferredVoice.lang;
-            } else {
-                utterance.lang = 'es-MX';
-            }
+            utterance.lang = 'es-MX'; // Forzado manual en cada emisión
+            utterance.rate = 0.6;     // Velocidad lenta para marcar la 'o' y evitar la 'u'
+            utterance.pitch = 1.1; 
+            
+            if (preferredVoice) utterance.voice = preferredVoice;
 
             utterance.onstart = () => enableOptions();
             utterance.onend = () => playButton.disabled = false;
+            
             speechSynthesis.speak(utterance);
         }
 
