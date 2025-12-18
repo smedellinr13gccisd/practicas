@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Reconocimiento de Sílabas</title>
+    <title>Práctica de Sílabas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
@@ -38,7 +38,7 @@
             text-align: center;
         }
 
-        header h1 { color: var(--color-primary); margin-bottom: 10px; }
+        header h1 { color: var(--color-primary); margin-bottom: 10px; font-size: 1.8em; }
 
         #counter-group {
             display: flex;
@@ -48,9 +48,10 @@
         }
 
         #counter-box, #error-box {
-            padding: 10px 20px;
+            padding: 10px 15px;
             border-radius: 12px;
             font-weight: bold;
+            font-size: 0.9em;
         }
 
         #counter-box { background-color: var(--color-neutral); }
@@ -72,43 +73,43 @@
         #play-syllable-btn:active { transform: scale(0.95); }
         #play-syllable-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .instruction { margin: 20px 0; color: #78909c; font-size: 1.1em; }
+        .instruction { margin: 20px 0; color: #78909c; font-size: 1.1em; font-weight: bold; }
 
         .syllable-options {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 15px;
-            margin-top: 20px;
+            margin-top: 10px;
         }
 
         .syllable-options input[type="radio"] { display: none; }
 
         .syllable-options label {
-            width: 100px;
-            height: 100px;
+            width: 95px;
+            height: 95px;
             background-color: #f7f7f7;
             border: 4px solid #cfd8dc;
             border-radius: 15px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 2.5em;
+            font-size: 2.2em;
             font-weight: 900;
             cursor: pointer;
             transition: all 0.2s;
+            color: var(--color-text);
         }
 
         .syllable-options label.disabled { pointer-events: none; opacity: 0.5; }
 
-        input:checked + label.correct { border-color: var(--color-success); background-color: #e8f5e9; }
+        input:checked + label.correct { border-color: var(--color-success); background-color: #e8f5e9; transform: scale(1.05); }
         input:checked + label.incorrect { border-color: var(--color-error); background-color: #ffebee; }
 
-        /* Modal */
         .modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.7);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -120,19 +121,19 @@
             padding: 40px;
             border-radius: 20px;
             text-align: center;
-            max-width: 80%;
+            max-width: 85%;
         }
 
-        .modal-success p { color: var(--color-success); font-size: 1.8em; font-weight: bold; }
-        .modal-error p { color: var(--color-error); font-size: 1.8em; font-weight: bold; }
+        .modal-success p { color: var(--color-success); font-size: 2em; font-weight: bold; }
+        .modal-error p { color: var(--color-error); font-size: 2em; font-weight: bold; }
 
         #modal-action-btn {
-            margin-top: 20px;
-            padding: 15px 40px;
+            margin-top: 25px;
+            padding: 15px 45px;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             color: white;
-            font-size: 1.2em;
+            font-size: 1.3em;
             font-weight: bold;
             cursor: pointer;
         }
@@ -141,14 +142,13 @@
         .modal-error #modal-action-btn { background-color: var(--color-error); }
 
         .hidden { display: none; }
-        #initial-blocker { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 3000; background: transparent; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <header>
-            <h1>Reconocimiento de Sílabas 🗣️</h1>
+            <h1>Práctica de Sílabas 🗣️</h1>
             <div id="counter-group">
                 <div id="counter-box">Aciertos: <span id="completed-count">0 de 0</span></div>
                 <div id="error-box">Errores: <span id="error-count">0</span></div>
@@ -157,7 +157,7 @@
 
         <main>
             <button id="play-syllable-btn"><i class="fas fa-volume-up"></i></button>
-            <p class="instruction" id="main-instruction">Pulsa la bocina para iniciar.</p>
+            <p class="instruction" id="main-instruction">Toca la bocina para escuchar</p>
             <form id="syllable-options" class="syllable-options"></form>
         </main>
     </div>
@@ -169,15 +169,17 @@
         </div>
     </div>
 
-    <div id="initial-blocker" class="hidden"></div>
-
     <script>
+        // Lista expandida con directas e inversas
         const allSyllables = [
-            "ma", "me", "mi", "mo", "mu", "pa", "pe", "pi", "po", "pu", 
-            "sa", "se", "si", "so", "su", "la", "le", "li", "lo", "lu", 
-            "da", "de", "di", "do", "du", "ra", "re", "ri", "ro", "ru", 
-            "na", "ne", "ni", "no", "nu", "ta", "te", "ti", "to", "tu",
-            "ca", "co", "cu", "que", "qui", "ga", "go", "gu", "va", "ve", "vi", "vo", "vu"
+            "ma", "am", "me", "em", "mi", "im", "mo", "om", "mu", "um",
+            "pa", "ap", "pe", "ep", "pi", "ip", "po", "op", "pu", "up",
+            "sa", "as", "se", "es", "si", "is", "so", "os", "su", "us",
+            "la", "al", "le", "el", "li", "il", "lo", "ol", "lu", "ul",
+            "ta", "at", "te", "et", "ti", "it", "to", "ot", "tu", "ut",
+            "da", "ad", "de", "ed", "di", "id", "do", "od", "du", "ud",
+            "ba", "be", "bi", "bo", "bu", "na", "an", "ne", "en", "ni", "in", "no", "on", "nu", "un",
+            "va", "ve", "vi", "vo", "vu", "fa", "af", "fe", "ef", "fi", "if", "fo", "of", "fu", "uf"
         ];
 
         let currentCorrectSyllable = '';
@@ -197,7 +199,6 @@
         const modalMessage = document.getElementById('modal-message');
         const modalActionButton = document.getElementById('modal-action-btn');
 
-        // --- Configuración de Voz (CRÍTICO para iOS/Safari) ---
         function setPreferredVoice() {
             const voices = speechSynthesis.getVoices();
             const targetVoiceNames = [/sandra/i, /sofía/i, /ximena/i, /carmen/i, /teresa/i, /paulina/i, /niña/i, /mujer/i, /female/i];
@@ -216,12 +217,10 @@
             if (!syllable) return;
             if (speechSynthesis.speaking) speechSynthesis.cancel();
 
-            // REPARACIÓN DE PRONUNCIACIÓN:
-            // Añadimos un espacio entre letras o un punto para que no lo lea como abreviatura (Na -> N a)
-            const phoneme = syllable.split('').join(' '); 
-            const utterance = new SpeechSynthesisUtterance(phoneme);
+            // Usamos minúsculas para que el motor de voz no lo lea como siglas (ej: NA -> sodio)
+            const utterance = new SpeechSynthesisUtterance(syllable.toLowerCase());
             
-            utterance.rate = 0.8; // Un poco más lento para que se entienda la unión
+            utterance.rate = 0.85; 
             utterance.pitch = 1.2; 
             
             if (preferredVoice) {
@@ -246,7 +245,7 @@
                 const radio = document.createElement('input');
                 radio.type = 'radio'; radio.name = 'syl'; radio.id = 's' + i; radio.value = syl;
                 const label = document.createElement('label');
-                label.htmlFor = 's' + i; label.textContent = syl.toUpperCase();
+                label.htmlFor = 's' + i; label.textContent = syl; // Se muestra en minúsculas
                 label.classList.add('disabled');
                 optionsArea.appendChild(radio);
                 optionsArea.appendChild(label);
@@ -268,7 +267,6 @@
             } else {
                 label.classList.add('incorrect');
                 errorCount++;
-                // Mostrar la correcta
                 const correctRadio = document.querySelector(`input[value="${currentCorrectSyllable}"]`);
                 document.querySelector(`label[for="${correctRadio.id}"]`).classList.add('correct');
                 showModal(false);
@@ -280,8 +278,8 @@
         function showModal(isCorrect) {
             mainModal.classList.remove('hidden');
             modalContainer.className = 'modal-content ' + (isCorrect ? 'modal-success' : 'modal-error');
-            modalMessage.textContent = isCorrect ? "¡Excelente! 🎉" : "¡Inténtalo de nuevo! 🤔";
-            modalActionButton.textContent = isCorrect ? "Siguiente" : "Entendido";
+            modalMessage.textContent = isCorrect ? "¡Muy bien! 🌟" : "¡Casi! Inténtalo de nuevo 🔍";
+            modalActionButton.textContent = isCorrect ? "Siguiente" : "Volver a intentar";
         }
 
         function enableOptions() {
