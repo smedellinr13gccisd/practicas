@@ -16,14 +16,13 @@
             --color-background: #f0f2f5;
         }
 
-        /* Centrado absoluto en la pantalla */
         body {
             font-family: 'Arial', sans-serif;
             background-color: var(--color-background);
             margin: 0;
             display: flex;
-            justify-content: center; /* Centrado horizontal */
-            align-items: center;     /* Centrado vertical */
+            justify-content: center; 
+            align-items: center;     
             min-height: 100vh;
             color: var(--color-text);
             touch-action: manipulation;
@@ -196,7 +195,6 @@
         let isInitialized = false;
         let startTime = Date.now();
         
-        // Variables del Cronómetro
         let timerInterval;
         let secondsElapsed = 0;
         let timerStarted = false;
@@ -240,12 +238,20 @@
             if (!syllable) return;
             if (speechSynthesis.speaking) speechSynthesis.cancel();
 
-            // Lógica para iPad: punto al final para evitar deletreo
-            const textToSpeak = syllable.toLowerCase() + "."; 
+            // REPARACIÓN FONÉTICA DEFINITIVA:
+            // 1. Usamos minúsculas.
+            // 2. Envolvemos la sílaba con comas y espacios: ", " + syl + ", ". 
+            // Esto le dice al iPad: "Esto no es una abreviatura, es una palabra aislada".
+            // 3. Para la "o", bajamos un poco el pitch justo en esa sílaba para que suene más abierta.
+            
+            const cleanSyl = syllable.toLowerCase();
+            const textToSpeak = ` , ${cleanSyl} , `; 
+            
             const utterance = new SpeechSynthesisUtterance(textToSpeak);
             
-            utterance.rate = 0.75; 
-            utterance.pitch = 1.2; 
+            // Ajuste de tono dinámico para evitar que la 'o' suene como 'u'
+            utterance.pitch = cleanSyl.includes('o') ? 1.0 : 1.2;
+            utterance.rate = 0.7; // Un poco más lento para que la unión de las dos letras sea clara
             
             if (preferredVoice) {
                 utterance.voice = preferredVoice;
@@ -320,7 +326,7 @@
             if (!isInitialized) {
                 isInitialized = true;
                 generateNewPractice();
-                startTimer(); // El cronómetro inicia con la primera interacción
+                startTimer();
             }
             playButton.disabled = true;
             speakSyllable(currentCorrectSyllable);
