@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lectura de Sílabas Trabadas e Inversas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --color-primary: #4a148c;
+            --color-secondary: #ff9800;
+            --color-success: #4caf50;
+            --color-error: #f44336;
+            --color-neutral: #f3e5f5;
+            --color-text: #263238;
+            --color-background: #fff9c4; 
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--color-background);
+            margin: 0;
+            display: flex;
+            justify-content: center; 
+            align-items: center;     
+            min-height: 100vh;
+            color: var(--color-text);
+            touch-action: manipulation;
+        }
+
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 95%;
+            width: 500px;
+            text-align: center;
+            box-sizing: border-box;
+            border: 4px solid #ffeb3b;
+        }
+
+        header h1 { color: var(--color-primary); margin-bottom: 5px; font-size: 1.5em; }
+
+        #counter-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        #counter-box, #error-box, #timer-box {
+            padding: 8px 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        #counter-box { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+        #error-box { background-color: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        #timer-box { background-color: #e3f2fd; color: #1565c0; min-width: 90px; border: 1px solid #bbdefb; }
+
+        #play-word-btn {
+            background-color: var(--color-secondary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            font-size: 3em;
+            cursor: pointer;
+            box-shadow: 0 6px 12px rgba(255, 152, 0, 0.4);
+            transition: all 0.2s;
+            margin: 15px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #play-word-btn:active { transform: scale(0.9); }
+        #play-word-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+        .instruction { margin: 10px 0; color: #455a64; font-size: 1.1em; font-weight: 700; }
+
+        .word-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .word-options input[type="radio"] { display: none; }
+
+        .word-options label {
+            height: 80px;
+            background-color: #fff;
+            border: 4px solid #f0f0f0;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8em;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--color-primary);
+            text-transform: lowercase;
+        }
+
+        .word-options label.disabled { pointer-events: none; opacity: 0.7; }
+
+        input:checked + label.correct { border-color: var(--color-success); background-color: #e8f5e9; color: #2e7d32; transform: scale(1.05); }
+        input:checked + label.incorrect { border-color: var(--color-error); background-color: #ffebee; color: #c62828; }
+
+        label.reveal-correct { border-color: var(--color-success); color: #2e7d32; }
+
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 25px;
+            text-align: center;
+            max-width: 85%;
+            width: 350px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-success p { color: var(--color-success); font-size: 2em; font-weight: bold; margin: 10px 0; }
+        .modal-error p { color: var(--color-error); font-size: 1.8em; font-weight: bold; margin: 10px 0; }
+
+        #modal-action-btn {
+            margin-top: 20px;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .modal-success #modal-action-btn { background-color: var(--color-success); }
+        .modal-error #modal-action-btn { background-color: var(--color-error); }
+
+        .hidden { display: none; }
+
+        .emoji-feedback { font-size: 4em; display: block; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Palabras Mágicas 🌟</h1>
+            <div id="counter-group">
+                <div id="counter-box">Aciertos: <span id="completed-count">0 de 0</span></div>
+                <div id="error-box">Errores: <span id="error-count">0</span></div>
+            </div>
+            <div style="display: flex; justify-content: center; margin-bottom: 10px;">
+                <div id="timer-box"><i class="fas fa-clock"></i> <span id="timer-display">00:00</span></div>
+            </div>
+        </header>
+
+        <main>
+            <button id="play-word-btn" title="Escuchar palabra"><i class="fas fa-volume-up"></i></button>
+            <p class="instruction" id="main-instruction">¡Escucha con atención y elige!</p>
+            <form id="word-options-form" class="word-options"></form>
+        </main>
+    </div>
+
+    <div id="main-modal" class="modal hidden">
+        <div class="modal-content" id="modal-container">
+            <span id="modal-emoji" class="emoji-feedback"></span>
+            <p id="modal-message"></p>
+            <button id="modal-action-btn">¡Siguiente!</button>
+        </div>
+    </div>
+
+    <script>
+        // Banco de datos completo basado en todas tus combinaciones
+        const allWords = [
+            // BL
+            "tabla", "blusa", "roble", "cable", "habla", "mueble", "niebla", "oblea", "ombligo", "pueblo",
+            // CL
+            "clavo", "clima", "chicle", "tecla", "clara", "clase", "cloro", "reclamo", "incluye", "clásico",
+            // FL
+            "flan", "flecha", "flota", "rifle", "infla", "flaco", "fleco", "chifla", "florero", "fluido",
+            // GL
+            "globo", "regla", "siglo", "iglú", "glúteo", "glándula", "renglón", "siglos", "gladiolo", "glotón",
+            // PL
+            "plato", "playa", "pluma", "plano", "sopla", "copla", "pleito", "planta", "pliego", "plata",
+            // TLA
+            "tlatil", "atlas", "atleta", "atlético", "tlatel",
+            // BR
+            "brazo", "sobre", "libro", "cebra", "broma", "brisa", "bruma", "cobre", "cabro", "abrigo",
+            // CR
+            "crema", "micro", "crudo", "lacra", "crece", "cruce", "cresta", "cromo", "cráneo", "criado",
+            // DR
+            "draga", "droga", "padre", "madre", "cuadro", "piedra", "vidrio", "sidra", "drenaje", "dril",
+            // FR
+            "fresa", "fruta", "frase", "freno", "cofre", "frío", "frotó", "fregó", "frasco", "frito",
+            // GR
+            "grillo", "ogro", "tigre", "negro", "grasa", "grito", "gruta", "grano", "mugre", "gratis",
+            // PR
+            "prisa", "preso", "prado", "precio", "pobre", "prosa", "primo", "premio", "prueba", "proa",
+            // TR
+            "tren", "trapo", "tres", "truco", "trigo", "traje", "potro", "trote", "trueno", "trío",
+            // INVERSAS AR, ER, IR, OR, UR
+            "arco", "arte", "perla", "irma", "orca", "urna", "urbe", "orden", "arpa", "harto",
+            // INVERSAS AL, EL, IL, OL, UL
+            "alto", "alma", "elmo", "isla", "olmo", "ultra", "alga", "elba", "alce", "pulpo",
+            // INVERSAS AN, EN, IN, ON, UN
+            "antes", "ando", "ente", "inla", "onda", "unla", "indio", "onza", "ancla", "entre",
+            // INVERSAS AS, ES, IS, OS, US
+            "asno", "esto", "esta", "isla", "oscuro", "usta", "astro", "este", "asco", "pasto",
+            // INVERSAS AD, ED, ID, OD, UD
+            "admi", "edén", "idra", "odra", "udra", "adán", "edad", "usted", "redes",
+            // INVERSAS AZ, EZ, IZ, OZ, UZ
+            "hazlo", "mezcla", "tizna", "gozno", "luzca", "pizca", "diezmo", "lápiz", "arroz"
+        ];
+
+        let currentCorrectWord = '';
+        let completedCount = 0, errorCount = 0, totalAttempts = 0;
+        let preferredVoice = null;
+        let isInitialized = false;
+        let timerInterval, secondsElapsed = 0, timerStarted = false;
+
+        const optionsArea = document.getElementById('word-options-form');
+        const playButton = document.getElementById('play-word-btn');
+        const countDisplay = document.getElementById('completed-count');
+        const errorCountDisplay = document.getElementById('error-count');
+        const timerDisplay = document.getElementById('timer-display');
+        const mainModal = document.getElementById('main-modal');
+        const modalContainer = document.getElementById('modal-container');
+        const modalEmoji = document.getElementById('modal-emoji');
+        const modalMessage = document.getElementById('modal-message');
+        const modalActionButton = document.getElementById('modal-action-btn');
+
+        function startTimer() {
+            if (timerStarted) return;
+            timerStarted = true;
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+                const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+                timerDisplay.textContent = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function setPreferredVoice() {
+            const voices = speechSynthesis.getVoices();
+            // Buscar voz en español preferiblemente de México
+            let clearVoice = voices.find(v => v.lang === 'es-MX' && /Paulin|Ximen|Sofi/i.test(v.name));
+            if (!clearVoice) clearVoice = voices.find(v => v.lang === 'es-MX');
+            if (!clearVoice) clearVoice = voices.find(v => v.lang.startsWith('es'));
+            preferredVoice = clearVoice || null;
+        }
+
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = setPreferredVoice;
+        }
+        setPreferredVoice();
+
+        function speakWord(word) {
+            if (!word) return;
+            if (speechSynthesis.speaking) speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(word.toLowerCase());
+            utterance.lang = 'es-MX';
+            utterance.rate = 0.5; // Un poco más lento para mejor claridad
+            utterance.pitch = 1.1; 
+            
+            if (preferredVoice) utterance.voice = preferredVoice;
+
+            utterance.onstart = () => enableOptions();
+            utterance.onend = () => playButton.disabled = false;
+            
+            speechSynthesis.speak(utterance);
+        }
+
+        function generateNewPractice() {
+            // Mezclar todo el banco de datos completamente en cada turno
+            const shuffledWords = [...allWords].sort(() => 0.5 - Math.random());
+            currentCorrectWord = shuffledWords[0];
+            
+            // Obtener 3 opciones incorrectas aleatorias
+            const otherOptions = shuffledWords.slice(1, 4);
+            const options = [currentCorrectWord, ...otherOptions].sort(() => 0.5 - Math.random());
+            
+            optionsArea.innerHTML = '';
+            options.forEach((word, i) => {
+                const radio = document.createElement('input');
+                radio.type = 'radio'; radio.name = 'word'; radio.id = 'w' + i; radio.value = word;
+                const label = document.createElement('label');
+                label.htmlFor = 'w' + i; label.textContent = word;
+                label.classList.add('disabled'); // Deshabilitadas hasta que se escuche el audio
+                optionsArea.appendChild(radio);
+                optionsArea.appendChild(label);
+            });
+        }
+
+        function handleSelection(e) {
+            if (!isInitialized) return;
+            const selected = e.target.value;
+            const label = document.querySelector(`label[for="${e.target.id}"]`);
+            disableOptions();
+            totalAttempts++;
+            
+            if (selected === currentCorrectWord) {
+                label.classList.add('correct');
+                completedCount++;
+                setTimeout(() => showModal(true), 400);
+            } else {
+                label.classList.add('incorrect');
+                errorCount++;
+                const correctRadio = document.querySelector(`input[value="${currentCorrectWord}"]`);
+                document.querySelector(`label[for="${correctRadio.id}"]`).classList.add('reveal-correct');
+                setTimeout(() => showModal(false), 800);
+            }
+            countDisplay.textContent = `${completedCount} de ${totalAttempts}`;
+            errorCountDisplay.textContent = errorCount;
+        }
+
+        function showModal(isCorrect) {
+            mainModal.classList.remove('hidden');
+            modalContainer.className = 'modal-content ' + (isCorrect ? 'modal-success' : 'modal-error');
+            
+            if (isCorrect) {
+                modalEmoji.textContent = "🚀";
+                modalMessage.textContent = "¡Increíble!";
+                modalActionButton.textContent = "¡Otra palabra!";
+            } else {
+                modalEmoji.textContent = "✨";
+                modalMessage.textContent = "¡Sigue intentando!";
+                modalActionButton.textContent = "Reintentar";
+            }
+        }
+
+        function enableOptions() { 
+            document.querySelectorAll('.word-options label').forEach(l => l.classList.remove('disabled')); 
+            optionsArea.addEventListener('change', handleSelection); 
+        }
+        
+        function disableOptions() { 
+            document.querySelectorAll('.word-options label').forEach(l => l.classList.add('disabled')); 
+            optionsArea.removeEventListener('change', handleSelection); 
+        }
+
+        playButton.addEventListener('click', () => {
+            if (!isInitialized) { 
+                isInitialized = true; 
+                generateNewPractice(); 
+                startTimer(); 
+            }
+            playButton.disabled = true;
+            speakWord(currentCorrectWord);
+        });
+
+        modalActionButton.addEventListener('click', () => {
+            mainModal.classList.add('hidden');
+            if (modalContainer.classList.contains('modal-success')) {
+                generateNewPractice();
+                setTimeout(() => { 
+                    playButton.disabled = true; 
+                    speakWord(currentCorrectWord); 
+                }, 300);
+            } else {
+                optionsArea.reset();
+                document.querySelectorAll('.word-options label').forEach(l => {
+                    l.classList.remove('incorrect', 'reveal-correct');
+                });
+                enableOptions();
+            }
+        });
+
+        window.onload = () => { 
+            countDisplay.textContent = `0 de 0`; 
+        };
+    </script>
+</body>
+</html>
