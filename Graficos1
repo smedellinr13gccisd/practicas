@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis de Gráficas NWEA - 1er Grado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
+        
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background-color: #f8fafc; 
+            color: #1e293b;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .nwea-card {
+            width: 100%;
+            max-width: 950px;
+            margin: auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.1);
+            border: 2px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        /* Contenedor de iconos apilados (Vertical) */
+        .stack-vertical {
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            gap: 4px;
+            min-height: 200px;
+            justify-content: flex-start;
+        }
+
+        /* Contenedor de iconos apilados (Horizontal) */
+        .stack-horizontal {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 4px;
+            justify-content: flex-start;
+            padding: 8px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            min-height: 50px;
+        }
+
+        .unit-icon {
+            font-size: 1.5rem;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        .option-btn {
+            border: 3px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .option-btn:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: translateY(-2px);
+        }
+
+        .option-btn.correct {
+            background-color: #dcfce7 !important;
+            border-color: #22c55e !important;
+            color: #166534;
+        }
+
+        .option-btn.wrong {
+            background-color: #fee2e2 !important;
+            border-color: #ef4444 !important;
+            color: #991b1b;
+        }
+
+        .grid-bg {
+            background-image: linear-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 100% 40px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center">
+
+    <div class="nwea-card">
+        <!-- Header -->
+        <div class="bg-blue-600 p-5 flex justify-between items-center text-white">
+            <div>
+                <h1 class="text-xl font-black uppercase tracking-wider">MAP Growth: Análisis</h1>
+                <p class="text-blue-100 text-sm">Práctica de Gráficas de Barras</p>
+            </div>
+            <div class="bg-white text-blue-600 px-5 py-2 rounded-full font-black shadow-inner" id="progress">
+                1 / 13
+            </div>
+        </div>
+
+        <div id="game-area" class="p-6 md:p-10">
+            <!-- Audio y Pregunta -->
+            <div class="flex items-center gap-5 mb-10 bg-slate-50 p-6 rounded-2xl border-2 border-slate-100">
+                <button id="playAudio" class="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg transition-all active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    </svg>
+                </button>
+                <h2 id="questionText" class="text-xl md:text-2xl font-bold text-slate-800 leading-tight">Cargando...</h2>
+            </div>
+
+            <div class="grid lg:grid-cols-5 gap-10">
+                <!-- Gráfica (3/5 columnas) -->
+                <div class="lg:col-span-3">
+                    <div id="chartContainer" class="bg-white border-2 border-slate-200 rounded-xl p-4 min-h-[350px] flex flex-col justify-center">
+                        <!-- Aquí se inyecta la gráfica vertical u horizontal -->
+                    </div>
+                </div>
+
+                <!-- Opciones (2/5 columnas) -->
+                <div class="lg:col-span-2">
+                    <p class="text-slate-400 font-bold uppercase text-xs mb-4 tracking-widest">Elige tu respuesta</p>
+                    <div class="grid grid-cols-2 gap-4" id="optionsGrid">
+                        <!-- Botones -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12 text-center">
+                <button id="nextBtn" class="hidden bg-blue-600 text-white px-14 py-4 rounded-2xl font-black text-xl hover:bg-blue-700 transition-all shadow-xl hover:-translate-y-1">
+                    SIGUIENTE PREGUNTA →
+                </button>
+            </div>
+        </div>
+
+        <!-- Pantalla Final -->
+        <div id="results" class="hidden p-20 text-center">
+            <div class="text-8xl mb-6">🏆</div>
+            <h2 class="text-5xl font-black text-slate-800 mb-2">¡Increíble!</h2>
+            <p class="text-2xl text-slate-500 mb-10">Terminaste los 13 desafíos de análisis.</p>
+            <div class="text-8xl font-black text-blue-600 mb-12" id="finalScore">13 / 13</div>
+            <button onclick="location.reload()" class="bg-slate-800 text-white px-12 py-5 rounded-2xl font-black text-2xl shadow-2xl hover:bg-slate-700">
+                REPETIR PRÁCTICA
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const exercises = [
+            { 
+                q: "¿Qué animal tiene MÁS votos?", 
+                type: "vertical",
+                data: [{l:"Perro", i:"🐶", v:4}, {l:"Gato", i:"🐱", v:6}, {l:"Hámster", i:"🐹", v:3}], 
+                ans: "Gato 🐱", 
+                opts: ["Perro 🐶", "Gato 🐱", "Hámster 🐹"] 
+            },
+            { 
+                q: "¿Qué fruta tiene MENOS votos?", 
+                type: "horizontal",
+                data: [{l:"Uva", i:"🍇", v:2}, {l:"Piña", i:"🍍", v:5}, {l:"Pera", i:"🍐", v:4}], 
+                ans: "Uva 🍇", 
+                opts: ["Uva 🍇", "Piña 🍍", "Pera 🍐"] 
+            },
+            { 
+                q: "¿Cuántas ESTRELLAS hay en total?", 
+                type: "vertical",
+                data: [{l:"Estrella", i:"⭐", v:5}], 
+                ans: "5", 
+                opts: ["3", "5", "7", "4"] 
+            },
+            { 
+                q: "¿Qué juguete prefieren MÁS niños?", 
+                type: "horizontal",
+                data: [{l:"Tren", i:"🚂", v:3}, {l:"Robot", i:"🤖", v:7}, {l:"Auto", i:"🚗", v:5}], 
+                ans: "Robot 🤖", 
+                opts: ["Tren 🚂", "Robot 🤖", "Auto 🚗"] 
+            },
+            { 
+                q: "¿Cuántas PELOTAS amarillas hay?", 
+                type: "vertical",
+                data: [{l:"Roja", i:"🔴", v:4}, {l:"Amarilla", i:"🟡", v:3}, {l:"Azul", i:"🔵", v:5}], 
+                ans: "3", 
+                opts: ["4", "5", "3", "2"] 
+            },
+            { 
+                q: "¿Qué postre tiene MENOS?", 
+                type: "horizontal",
+                data: [{l:"Donas", i:"🍩", v:6}, {l:"Pastel", i:"🍰", v:2}, {l:"Helado", i:"🍦", v:5}], 
+                ans: "Pastel 🍰", 
+                opts: ["Donas 🍩", "Pastel 🍰", "Helado 🍦"] 
+            },
+            { 
+                q: "¿Cuántos HELADOS hay?", 
+                type: "vertical",
+                data: [{l:"Helado", i:"🍦", v:8}], 
+                ans: "8", 
+                opts: ["6", "10", "8", "7"] 
+            },
+            { 
+                q: "¿Qué transporte tiene MÁS?", 
+                type: "horizontal",
+                data: [{l:"Bici", i:"🚲", v:4}, {l:"Avión", i:✈️", v:2}, {l:"Barco", i:"🚢", v:6}], 
+                ans: "Barco 🚢", 
+                opts: ["Bici 🚲", "Avión ✈️", "Barco 🚢"] 
+            },
+            { 
+                q: "¿Cuál es el color con MENOS votos?", 
+                type: "vertical",
+                data: [{l:"Verde", i:"🟢", v:5}, {l:"Azul", i:"🔵", v:2}, {l:"Naranja", i:"🟠", v:4}], 
+                ans: "Azul 🔵", 
+                opts: ["Verde 🟢", "Azul 🔵", "Naranja 🟠"] 
+            },
+            { 
+                q: "¿Cuántas MANZANAS hay?", 
+                type: "horizontal",
+                data: [{l:"Manzana", i:"🍎", v:7}], 
+                ans: "7", 
+                opts: ["5", "7", "9", "6"] 
+            },
+            { 
+                q: "¿Qué bicho hay MÁS?", 
+                type: "vertical",
+                data: [{l:"Abeja", i:"🐝", v:4}, {l:"Araña", i:"🕷️", v:3}, {l:"Mariposa", i:"🦋", v:6}], 
+                ans: "Mariposa 🦋", 
+                opts: ["Abeja 🐝", "Araña 🕷️", "Mariposa 🦋"] 
+            },
+            { 
+                q: "¿Qué comida tiene MENOS?", 
+                type: "horizontal",
+                data: [{l:"Pizza", i:"🍕", v:5}, {l:"Taco", i:"🌮", v:3}, {l:"Burger", i:"🍔", v:8}], 
+                ans: "Taco 🌮", 
+                opts: ["Pizza 🍕", "Taco 🌮", "Burger 🍔"] 
+            },
+            { 
+                q: "¿Cuántas FLORES hay?", 
+                type: "vertical",
+                data: [{l:"Flor", i:"🌸", v:9}], 
+                ans: "9", 
+                opts: ["7", "8", "9", "10"] 
+            }
+        ];
+
+        let currentIdx = 0;
+        let score = 0;
+        let canAnswer = true;
+
+        function speak(text) {
+            const ut = new SpeechSynthesisUtterance(text);
+            ut.lang = 'es-ES';
+            ut.rate = 0.85;
+            window.speechSynthesis.speak(ut);
+        }
+
+        function loadQuestion() {
+            const ex = exercises[currentIdx];
+            canAnswer = true;
+            document.getElementById('progress').innerText = `${currentIdx + 1} / 13`;
+            document.getElementById('questionText').innerText = ex.q;
+            document.getElementById('nextBtn').classList.add('hidden');
+            
+            const chart = document.getElementById('chartContainer');
+            chart.innerHTML = '';
+
+            if (ex.type === "vertical") {
+                // Diseño Vertical con Iconos Apilados
+                const grid = document.createElement('div');
+                grid.className = "flex justify-around items-end h-full gap-2 px-4";
+                ex.data.forEach(item => {
+                    const col = document.createElement('div');
+                    col.className = "flex flex-col items-center flex-1";
+                    
+                    const stack = document.createElement('div');
+                    stack.className = "stack-vertical w-full bg-slate-50 border-x border-t border-slate-100 rounded-t-lg pb-2";
+                    for(let i=0; i<item.v; i++) {
+                        const icon = document.createElement('span');
+                        icon.className = "unit-icon";
+                        icon.innerText = item.i;
+                        stack.appendChild(icon);
+                    }
+                    
+                    const label = document.createElement('div');
+                    label.className = "mt-3 text-center font-bold text-slate-600 text-sm";
+                    label.innerHTML = `<span class="block text-lg">${item.i}</span>${item.l}`;
+                    
+                    col.appendChild(stack);
+                    col.appendChild(label);
+                    grid.appendChild(col);
+                });
+                chart.appendChild(grid);
+            } else {
+                // Diseño Horizontal con Iconos Apilados
+                const grid = document.createElement('div');
+                grid.className = "flex flex-col gap-6 p-4";
+                ex.data.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = "flex flex-col gap-2";
+                    
+                    const label = document.createElement('div');
+                    label.className = "font-bold text-slate-600 text-sm flex items-center gap-2";
+                    label.innerHTML = `<span>${item.i}</span> ${item.l}`;
+                    
+                    const stack = document.createElement('div');
+                    stack.className = "stack-horizontal flex-1";
+                    for(let i=0; i<item.v; i++) {
+                        const icon = document.createElement('span');
+                        icon.className = "unit-icon";
+                        icon.innerText = item.i;
+                        stack.appendChild(icon);
+                    }
+
+                    row.appendChild(label);
+                    row.appendChild(stack);
+                    grid.appendChild(row);
+                });
+                chart.appendChild(grid);
+            }
+
+            // Opciones
+            const gridOpts = document.getElementById('optionsGrid');
+            gridOpts.innerHTML = '';
+            ex.opts.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => check(opt, btn);
+                gridOpts.appendChild(btn);
+            });
+
+            setTimeout(() => speak(ex.q), 600);
+        }
+
+        function check(val, btn) {
+            if (!canAnswer) return;
+            canAnswer = false;
+            
+            const isCorrect = val === exercises[currentIdx].ans;
+            if (isCorrect) {
+                btn.classList.add('correct');
+                score++;
+            } else {
+                btn.classList.add('wrong');
+                Array.from(document.getElementsByClassName('option-btn')).forEach(b => {
+                    if (b.innerText === exercises[currentIdx].ans) b.classList.add('correct');
+                });
+            }
+            document.getElementById('nextBtn').classList.remove('hidden');
+        }
+
+        document.getElementById('playAudio').onclick = () => speak(exercises[currentIdx].q);
+        
+        document.getElementById('nextBtn').onclick = () => {
+            currentIdx++;
+            if (currentIdx < exercises.length) loadQuestion();
+            else {
+                document.getElementById('game-area').classList.add('hidden');
+                document.getElementById('results').classList.remove('hidden');
+                document.getElementById('finalScore').innerText = `${score} / 13`;
+            }
+        };
+
+        loadQuestion();
+    </script>
+</body>
+</html>
