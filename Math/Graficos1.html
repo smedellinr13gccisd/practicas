@@ -168,23 +168,57 @@
         let canAnswer = true;
         let voices = [];
 
-        function initVoices() { voices = window.speechSynthesis.getVoices(); }
-        if (speechSynthesis.onvoiceschanged !== undefined) { speechSynthesis.onvoiceschanged = initVoices; }
+        // Inicializar voces con gestión asíncrona para Safari
+        function initVoices() {
+            voices = window.speechSynthesis.getVoices();
+        }
+        
+        // El evento onvoiceschanged es crítico para Safari/iOS
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = initVoices;
+        }
 
+        // Lógica de selección de voz optimizada
         function getBestVoice() {
             const allVoices = window.speechSynthesis.getVoices();
-            return allVoices.find(v => v.lang.startsWith('es') && (v.name.includes('Sofía') || v.name.includes('Sandra') || v.name.includes('Niña') || v.name.includes('Female'))) 
-                   || allVoices.find(v => v.lang === 'es-MX') || allVoices.find(v => v.lang.startsWith('es'));
+            
+            // Prioridad 1: Voces en español con nombres femeninos/infantiles
+            const priorityVoice = allVoices.find(v => 
+                (v.lang.startsWith('es')) && 
+                (v.name.includes('Sofía') || 
+                 v.name.includes('Sandra') || 
+                 v.name.includes('Niña') || 
+                 v.name.includes('Femenina') || 
+                 v.name.includes('Female') ||
+                 v.name.includes('Monica') ||
+                 v.name.includes('Paulina'))
+            );
+            
+            if (priorityVoice) return priorityVoice;
+
+            // Prioridad 2: Voz predeterminada de es-MX
+            const mxVoice = allVoices.find(v => v.lang === 'es-MX');
+            if (mxVoice) return mxVoice;
+
+            // Prioridad 3: Cualquier voz en español
+            return allVoices.find(v => v.lang.startsWith('es')) || null;
         }
 
         function speak(text) {
+            // Cancelar cualquier locución previa (necesario en iOS)
             window.speechSynthesis.cancel();
-            const ut = new SpeechSynthesisUtterance(text);
-            ut.voice = getBestVoice();
-            ut.rate = 0.9;
-            ut.pitch = 1.2;
-            ut.lang = 'es-MX';
-            window.speechSynthesis.speak(ut);
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voice = getBestVoice();
+            
+            if (voice) utterance.voice = voice;
+            
+            // Parámetros de optimización para iOS
+            utterance.rate = 0.9;  // Velocidad ligeramente más lenta
+            utterance.pitch = 1.2; // Tono infantil/agudo
+            utterance.lang = 'es-MX';
+            
+            window.speechSynthesis.speak(utterance);
         }
 
         function loadQuestion() {
@@ -248,6 +282,9 @@
                 btn.onclick = () => check(opt, btn);
                 gridOpts.appendChild(btn);
             });
+            
+            // En iOS, el primer audio debe ser iniciado por una acción del usuario (click).
+            // A partir de la segunda pregunta se puede intentar el autostart si hubo interacción previa.
             if(currentIdx > 0) speak(ex.q);
         }
 
@@ -277,6 +314,7 @@
             }
         };
 
+        // Carga inicial
         initVoices();
         loadQuestion();
     </script>
