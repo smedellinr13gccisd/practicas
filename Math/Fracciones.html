@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fracciones Visuales - 22 Retos</title>
+    <title>Fracciones Divertidas - Líneas Naranjas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
         
         body { 
             font-family: 'Outfit', sans-serif; 
-            background-color: #f0f9ff; 
+            background-color: #fff7ed; 
             margin: 0;
             padding: 10px;
             display: flex;
@@ -26,26 +26,26 @@
             background: white;
             border-radius: 32px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.1);
-            border: 4px solid #bae6fd;
+            border: 4px solid #fed7aa;
             overflow: hidden;
         }
 
         .fraction-display {
             background: #ffffff;
             border-radius: 24px;
-            padding: 30px;
-            min-height: 280px;
+            padding: 20px;
+            min-height: 300px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             margin: 20px;
-            border: 2px solid #e0f2fe;
+            border: 3px solid #ffedd5;
         }
 
         .num-btn {
             background: white;
-            border: 3px solid #e2e8f0;
+            border: 3px solid #f97316;
             border-radius: 20px;
             padding: 12px;
             font-size: 1.5rem;
@@ -58,31 +58,28 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            color: #c2410c;
         }
 
         .fraction-line {
             width: 30px;
-            height: 3px;
-            background: currentColor;
-            margin: 2px 0;
+            height: 4px;
+            background: #f97316;
+            margin: 4px 0;
         }
 
         .num-btn:active { transform: scale(0.95); }
         .num-btn.correct { background: #dcfce7; border-color: #22c55e; color: #166534; }
+        .num-btn.correct .fraction-line { background: #166534; }
         .num-btn.wrong { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+        .num-btn.wrong .fraction-line { background: #991b1b; }
 
         .stat-badge {
-            background: rgba(0,0,0,0.1);
+            background: rgba(0,0,0,0.2);
             padding: 6px 16px;
             border-radius: 12px;
             font-weight: 800;
-            color: #1e293b;
-        }
-
-        svg {
-            transform: rotate(-90deg);
-            border-radius: 50%;
-            background: #e2e8f0;
+            color: white;
         }
 
         #playInstruction {
@@ -94,42 +91,42 @@
 <body>
 
     <div class="math-card">
-        <div class="bg-sky-700 p-5 flex justify-between items-center text-white">
+        <div class="bg-orange-500 p-5 flex justify-between items-center text-white">
             <div class="flex items-center gap-2">
-                <span class="text-2xl">🍰</span>
-                <h1 class="text-xl font-black uppercase">Fracciones</h1>
+                <span class="text-2xl">🦊</span>
+                <h1 class="text-xl font-black uppercase">Fracciones Claras</h1>
             </div>
-            <div class="flex gap-3 text-white">
-                <div class="stat-badge text-white bg-sky-800" id="progress">1 / 22</div>
-                <div class="stat-badge text-yellow-300 bg-sky-800">⭐ <span id="score" class="text-white">0</span></div>
+            <div class="flex gap-3">
+                <div class="stat-badge" id="progress">1 / 22</div>
+                <div class="stat-badge bg-orange-700">⭐ <span id="score">0</span></div>
             </div>
         </div>
 
         <div id="game-container">
             <div class="p-6 text-center">
-                <button id="playInstruction" class="mb-4 bg-sky-500 text-white p-4 rounded-full shadow-lg">
+                <button id="playInstruction" class="mb-4 bg-orange-600 text-white p-4 rounded-full shadow-lg hover:bg-orange-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                     </svg>
                 </button>
-                <h2 class="text-xl font-bold text-slate-700 mb-6">¿Qué fracción está coloreada?</h2>
+                <h2 class="text-xl font-bold text-slate-700 mb-6">¿Qué fracción ves?</h2>
                 <div class="fraction-display" id="fractionArea"></div>
             </div>
 
             <div id="options" class="grid grid-cols-2 gap-4 px-6 pb-6"></div>
 
             <div class="px-6 pb-8 text-center">
-                <button id="nextBtn" class="hidden w-full bg-sky-900 text-white py-5 rounded-2xl font-black text-xl shadow-xl hover:bg-black transition-colors">
+                <button id="nextBtn" class="hidden w-full bg-orange-600 text-white py-5 rounded-2xl font-black text-xl shadow-xl hover:bg-orange-700 transition-colors">
                     SIGUIENTE ➔
                 </button>
             </div>
         </div>
 
         <div id="finish-screen" class="hidden p-12 text-center">
-            <div class="text-7xl mb-4">🏆</div>
-            <h2 class="text-4xl font-black text-slate-800 mb-2">¡Increíble!</h2>
-            <div class="text-6xl font-black text-slate-900 mb-8" id="finalScore">0 / 22</div>
-            <button onclick="location.reload()" class="bg-sky-900 text-white px-10 py-4 rounded-2xl font-bold hover:bg-black transition-transform active:scale-95">REINTENTAR</button>
+            <div class="text-7xl mb-4">✨</div>
+            <h2 class="text-4xl font-black text-slate-800 mb-2">¡Genial!</h2>
+            <div class="text-6xl font-black text-orange-600 mb-8" id="finalScore">0 / 22</div>
+            <button onclick="location.reload()" class="bg-orange-600 text-white px-10 py-4 rounded-2xl font-bold hover:bg-orange-700">JUGAR DE NUEVO</button>
         </div>
     </div>
 
@@ -142,44 +139,11 @@
         const totalQuestions = 22;
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        // Configuración de Voces
-        let voices = [];
-        function initVoices() {
-            voices = window.speechSynthesis.getVoices();
-        }
-        if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = initVoices;
-        }
-
-        function getBestVoice() {
-            const allVoices = window.speechSynthesis.getVoices();
-            // Prioridad: Voces femeninas/infantiles conocidas en español
-            const priorityNames = ['Sofía', 'Sandra', 'Paulina', 'Mónica', 'Niña', 'Femenina', 'Female', 'Google español'];
-            
-            let bestVoice = allVoices.find(v => 
-                v.lang.startsWith('es') && 
-                priorityNames.some(name => v.name.includes(name))
-            );
-
-            // Fallback a cualquier voz en español (preferencia MX)
-            if (!bestVoice) {
-                bestVoice = allVoices.find(v => v.lang === 'es-MX') || allVoices.find(v => v.lang.startsWith('es'));
-            }
-
-            return bestVoice;
-        }
-
         function speak(text) {
-            window.speechSynthesis.cancel(); // Detener cualquier audio previo
+            window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
-            const voice = getBestVoice();
-            
-            if (voice) utterance.voice = voice;
-            
             utterance.lang = 'es-MX';
-            utterance.rate = 0.9;  // Velocidad optimizada
-            utterance.pitch = 1.2; // Tono más agudo/infantil
-            
+            utterance.rate = 1.0;
             window.speechSynthesis.speak(utterance);
         }
 
@@ -188,18 +152,15 @@
             const gainNode = audioCtx.createGain();
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
-
             if (type === 'success') {
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(500, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.1);
             } else {
-                oscillator.type = 'square';
-                oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
-                oscillator.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
-                gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
             }
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
             oscillator.start();
             oscillator.stop(audioCtx.currentTime + 0.3);
@@ -210,44 +171,77 @@
             document.getElementById('nextBtn').classList.add('hidden');
             document.getElementById('progress').innerText = `${currentIdx + 1} / ${totalQuestions}`;
 
-            correctDen = Math.floor(Math.random() * 7) + 2; 
-            correctNum = Math.floor(Math.random() * correctDen) + 1;
+            // Máximo sextos (2 a 6)
+            correctDen = Math.floor(Math.random() * 5) + 2; 
+            correctNum = Math.floor(Math.random() * (correctDen - 1)) + 1;
 
             const area = document.getElementById('fractionArea');
             area.innerHTML = '';
 
+            const shapes = ['circle', 'rectangle', 'square'];
+            const selectedShape = shapes[Math.floor(Math.random() * shapes.length)];
+
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.setAttribute("width", "200");
-            svg.setAttribute("height", "200");
+            svg.setAttribute("width", "240");
+            svg.setAttribute("height", "240");
             svg.setAttribute("viewBox", "0 0 100 100");
 
-            const radius = 50, cx = 50, cy = 50;
+            // Líneas Naranjas y Gruesas
+            const strokeColor = "#f97316"; 
+            const strokeWidth = "3"; // Más gruesas
 
-            for (let i = 0; i < correctDen; i++) {
-                const startAngle = (i * 360) / correctDen;
-                const endAngle = ((i + 1) * 360) / correctDen;
-                const isColoured = i < correctNum;
-                
-                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                const x1 = cx + radius * Math.cos((startAngle * Math.PI) / 180);
-                const y1 = cy + radius * Math.sin((startAngle * Math.PI) / 180);
-                const x2 = cx + radius * Math.cos((endAngle * Math.PI) / 180);
-                const y2 = cy + radius * Math.sin((endAngle * Math.PI) / 180);
+            if (selectedShape === 'circle') {
+                const radius = 45, cx = 50, cy = 50;
+                const bgCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                bgCircle.setAttribute("cx", cx); bgCircle.setAttribute("cy", cy); bgCircle.setAttribute("r", radius);
+                bgCircle.setAttribute("fill", "#fffaf5"); bgCircle.setAttribute("stroke", strokeColor); bgCircle.setAttribute("stroke-width", strokeWidth);
+                svg.appendChild(bgCircle);
 
-                const d = `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`;
-                path.setAttribute("d", d);
-                path.setAttribute("fill", isColoured ? "#0ea5e9" : "#f1f5f9");
-                path.setAttribute("stroke", "#0c4a6e");
-                path.setAttribute("stroke-width", "1");
-                svg.appendChild(path);
+                for (let i = 0; i < correctDen; i++) {
+                    const startAngle = (i * 360) / correctDen - 90;
+                    const endAngle = ((i + 1) * 360) / correctDen - 90;
+                    const isColoured = i < correctNum;
+                    
+                    const x1 = cx + radius * Math.cos((startAngle * Math.PI) / 180);
+                    const y1 = cy + radius * Math.sin((startAngle * Math.PI) / 180);
+                    const x2 = cx + radius * Math.cos((endAngle * Math.PI) / 180);
+                    const y2 = cy + radius * Math.sin((endAngle * Math.PI) / 180);
+
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    const d = `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`;
+                    path.setAttribute("d", d);
+                    path.setAttribute("fill", isColoured ? "#fbbf24" : "transparent");
+                    path.setAttribute("stroke", strokeColor);
+                    path.setAttribute("stroke-width", strokeWidth);
+                    svg.appendChild(path);
+                }
+            } else {
+                const width = selectedShape === 'square' ? 80 : 90;
+                const height = selectedShape === 'square' ? 80 : 50;
+                const startX = (100 - width) / 2;
+                const startY = (100 - height) / 2;
+                const step = width / correctDen;
+
+                for (let i = 0; i < correctDen; i++) {
+                    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    rect.setAttribute("x", startX + (i * step));
+                    rect.setAttribute("y", startY);
+                    rect.setAttribute("width", step);
+                    rect.setAttribute("height", height);
+                    rect.setAttribute("fill", i < correctNum ? "#fbbf24" : "#fffaf5");
+                    rect.setAttribute("stroke", strokeColor);
+                    rect.setAttribute("stroke-width", strokeWidth);
+                    svg.appendChild(rect);
+                }
             }
+
             area.appendChild(svg);
 
+            // Opciones (siempre limitadas al rango del juego)
             let options = [{n: correctNum, d: correctDen}];
             while (options.length < 4) {
-                let fN = Math.floor(Math.random() * 8) + 1;
-                let fD = Math.floor(Math.random() * 7) + 2;
-                if (fN > fD) fN = fD;
+                let fD = Math.floor(Math.random() * 5) + 2;
+                let fN = Math.floor(Math.random() * (fD - 1)) + 1;
                 if (!options.some(o => o.n === fN && o.d === fD)) options.push({n: fN, d: fD});
             }
             options.sort(() => 0.5 - Math.random());
@@ -267,27 +261,29 @@
             if (!canAnswer) return;
             canAnswer = false;
 
-            const isCorrect = (val.n === correctNum && val.d === correctDen);
-
-            if (isCorrect) {
+            if (val.n === correctNum && val.d === correctDen) {
                 btn.classList.add('correct');
                 score++;
                 document.getElementById('score').innerText = score;
                 playSound('success');
-                speak(`¡Correcto! Son ${correctNum} de ${correctDen}`);
+                speak("¡Excelente!");
             } else {
                 btn.classList.add('wrong');
                 playSound('error');
-                speak(`No, esa es ${val.n} de ${val.d}. La respuesta correcta es ${correctNum} de ${correctDen}`);
+                speak(`Esa es ${val.n} de ${val.d}. La correcta es ${correctNum} de ${correctDen}`);
                 Array.from(document.getElementsByClassName('num-btn')).forEach(b => {
-                    const textContent = b.innerText.replace(/\s/g, '');
-                    if (textContent === `${correctNum}${correctDen}`) b.classList.add('correct');
+                    const parts = b.innerText.trim().split(/\n/);
+                    if (b.innerText.includes(correctNum) && b.innerText.includes(correctDen)) {
+                         // Simple check for the correct one visually
+                         if (b.children[0].innerText == correctNum && b.children[2].innerText == correctDen)
+                            b.classList.add('correct');
+                    }
                 });
             }
             document.getElementById('nextBtn').classList.remove('hidden');
         }
 
-        document.getElementById('playInstruction').onclick = () => speak("¿Qué fracción está coloreada?");
+        document.getElementById('playInstruction').onclick = () => speak("¿Qué fracción está coloreada en el dibujo?");
         
         document.getElementById('nextBtn').onclick = () => {
             currentIdx++;
@@ -300,8 +296,6 @@
             }
         };
 
-        // Inicializar voces al cargar
-        initVoices();
         window.onload = generateProblem;
     </script>
 </body>
