@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estrategias Matemáticas - Modelos de Suma y Resta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
+        
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background-color: #f8fafc; 
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .math-card {
+            width: 100%;
+            max-width: 950px;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+            border: 4px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        /* Estilo de los bloques */
+        .ten-rod {
+            width: 20px;
+            height: 100px;
+            background: #3b82f6;
+            border: 2px solid #1e3a8a;
+            border-radius: 4px;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 9px, #1e3a8a 9px, #1e3a8a 10px);
+            position: relative;
+        }
+
+        .unit-cube {
+            width: 22px;
+            height: 22px;
+            background: #ef4444;
+            border: 2px solid #7f1d1d;
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Cruz para eliminación */
+        .removed::after {
+            content: "✕";
+            color: white;
+            font-size: 18px;
+            font-weight: 900;
+            position: absolute;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .removed {
+            opacity: 0.35;
+            filter: grayscale(0.5);
+        }
+
+        .ten-rod.removed::after {
+            font-size: 40px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .strategy-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            min-height: 120px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 3px solid #f1f5f9;
+            border-radius: 24px;
+            padding: 20px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+        }
+
+        .option-btn:hover { 
+            border-color: #3b82f6; 
+            background: #f0f9ff;
+            transform: translateY(-5px);
+        }
+        
+        .option-btn.correct { border-color: #22c55e; background: #f0fdf4; }
+        .option-btn.wrong { border-color: #ef4444; background: #fef2f2; }
+
+        .speaker-btn {
+            background: #3b82f6;
+            color: white;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+        }
+
+        .error-tag {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 4px 16px;
+            border-radius: 99px;
+            font-weight: 800;
+            border: 2px solid #fca5a5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="math-card">
+        <div class="bg-slate-800 p-4 flex justify-between items-center text-white">
+            <h1 class="font-black uppercase tracking-tighter text-sm">Modelos Matemáticos 1-20</h1>
+            <div class="flex items-center gap-4">
+                <div id="error-counter" class="error-tag">ERRORES: 0</div>
+                <div id="progress" class="bg-blue-600 px-4 py-1 rounded-full text-sm font-bold">1 / 22</div>
+            </div>
+        </div>
+
+        <div id="game-container" class="p-6">
+            <div class="text-center mb-8">
+                <button id="playAudio" class="speaker-btn transition-transform active:scale-90">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    </svg>
+                </button>
+                <div class="bg-blue-50 border-2 border-blue-100 rounded-3xl p-6 shadow-inner max-w-2xl mx-auto">
+                    <p id="story-text" class="text-2xl font-bold text-slate-800 leading-tight"></p>
+                </div>
+            </div>
+
+            <div id="options" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+
+            <button id="nextBtn" class="hidden mt-10 w-full bg-emerald-600 text-white py-5 rounded-2xl font-black text-2xl hover:bg-emerald-700 shadow-xl transition-all">
+                ¡SIGUIENTE PROBLEMA! ➔
+            </button>
+        </div>
+
+        <div id="finish-screen" class="hidden p-16 text-center">
+            <div class="text-8xl mb-6">🏆</div>
+            <h2 class="text-5xl font-black text-slate-800 mb-4">¡Reto Terminado!</h2>
+            <div class="bg-slate-50 rounded-3xl p-8 mb-8 border-2 border-slate-100">
+                <p class="text-2xl text-slate-600 mb-2">Resumen de tu práctica:</p>
+                <p class="text-4xl font-bold text-emerald-600">22 Problemas Resueltos</p>
+                <p id="final-errors" class="text-3xl font-bold text-rose-500 mt-4"></p>
+            </div>
+            <button onclick="location.reload()" class="bg-blue-600 text-white px-12 py-5 rounded-2xl font-black text-xl shadow-lg hover:bg-blue-700">
+                REINTENTAR PRÁCTICA
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Problemas centrados en modelos tens/ones hasta 20
+        const problems = [
+            { s: "Había 5 manzanas en un árbol y caen 2.", type: "sub", model: {t:0, u:5, rem_u:2, rem_t:0} },
+            { s: "Ana tiene 10 canicas y compra 3 más.", type: "add", model: {t:1, u:0, add_u:3, add_t:0} },
+            { s: "Tengo 15 peces y se escapan 4.", type: "sub", model: {t:1, u:5, rem_u:4, rem_t:0} },
+            { s: "Hay 12 galletas y nos comemos 10.", type: "sub", model: {t:1, u:2, rem_t:1, rem_u:0} },
+            { s: "Juan tiene 7 globos y le regalan 2.", type: "add", model: {t:0, u:7, add_u:2, add_t:0} },
+            { s: "En el parque hay 10 niños y llegan 10 más.", type: "add", model: {t:1, u:0, add_t:1, add_u:0} },
+            { s: "Había 8 pájaros y volaron 3.", type: "sub", model: {t:0, u:8, rem_u:3, rem_t:0} },
+            { s: "Tengo 20 bloques y pierdo 5.", type: "sub", model: {t:2, u:0, rem_u:5, rem_t:0} },
+            { s: "Luis tiene 3 carritos y encuentra 4 más.", type: "add", model: {t:0, u:3, add_u:4, add_t:0} },
+            { s: "Hay 16 flores y marchitan 6.", type: "sub", model: {t:1, u:6, rem_u:6, rem_t:0} },
+            { s: "Tengo 5 dulces y mamá me da 5 más.", type: "add", model: {t:0, u:5, add_u:5, add_t:0} },
+            { s: "En una cesta hay 9 huevos y se rompen 4.", type: "sub", model: {t:0, u:9, rem_u:4, rem_t:0} },
+            { s: "Veo 4 mariposas y llegan 6 más.", type: "add", model: {t:0, u:4, add_u:6, add_t:0} },
+            { s: "Tengo 18 lápices y presto 8.", type: "sub", model: {t:1, u:8, rem_u:8, rem_t:0} },
+            { s: "Había 11 ranas y saltaron 4 más.", type: "add", model: {t:1, u:1, add_u:4, add_t:0} },
+            { s: "En el cielo hay 13 estrellas y se nublan 3.", type: "sub", model: {t:1, u:3, rem_u:3, rem_t:0} },
+            { s: "Compré 10 stickers y me regalaron 5 más.", type: "add", model: {t:1, u:0, add_u:5, add_t:0} },
+            { s: "Tenía 6 crayones y se quebraron 2.", type: "sub", model: {t:0, u:6, rem_u:2, rem_t:0} },
+            { s: "En el bus hay 12 personas y suben 8 más.", type: "add", model: {t:1, u:2, add_u:8, add_t:0} },
+            { s: "Hay 19 abejas y se van 9.", type: "sub", model: {t:1, u:9, rem_u:9, rem_t:0} },
+            { s: "Tengo 4 soles dibujados y dibujo 4 más.", type: "add", model: {t:0, u:4, add_u:4, add_t:0} },
+            { s: "Había 17 hormigas y se esconden 7.", type: "sub", model: {t:1, u:7, rem_u:7, rem_t:0} }
+        ];
+
+        let currentIdx = 0;
+        let totalErrors = 0;
+        let canAnswer = true;
+
+        function speak(text) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'es-MX';
+            msg.rate = 1;
+            window.speechSynthesis.speak(msg);
+        }
+
+        function createVisualModel(config, type) {
+            const container = document.createElement('div');
+            container.className = 'strategy-container';
+
+            const isSub = type === "sub";
+
+            // Grupo Inicial
+            const groupA = document.createElement('div');
+            groupA.className = 'flex items-end gap-1.5';
+
+            // Decenas iniciales
+            for(let i=0; i < config.t; i++) {
+                const rod = document.createElement('div');
+                rod.className = 'ten-rod';
+                if(isSub && config.rem_t > 0 && i >= (config.t - config.rem_t)) rod.classList.add('removed');
+                groupA.appendChild(rod);
+            }
+
+            // Unidades iniciales
+            const uWrap = document.createElement('div');
+            uWrap.className = 'flex flex-wrap-reverse gap-1 w-[48px]';
+            for(let i=0; i < config.u; i++) {
+                const cube = document.createElement('div');
+                cube.className = 'unit-cube';
+                if(isSub && config.rem_u > 0 && i >= (config.u - config.rem_u)) cube.classList.add('removed');
+                uWrap.appendChild(cube);
+            }
+            // Caso especial: Resta de unidades de una decena (ej: 20-5)
+            if(isSub && config.t > 0 && config.u === 0 && config.rem_u > 0) {
+                // Representamos la decena descompuesta para poder tachar unidades
+                uWrap.innerHTML = '';
+                for(let i=0; i<10; i++) {
+                    const cube = document.createElement('div');
+                    cube.className = 'unit-cube';
+                    if(i >= (10 - config.rem_u)) cube.classList.add('removed');
+                    uWrap.appendChild(cube);
+                }
+                // Quitamos una barra visualmente ya que se descompuso
+                const firstRod = groupA.querySelector('.ten-rod:not(.removed)');
+                if(firstRod) firstRod.remove();
+            }
+
+            groupA.appendChild(uWrap);
+            container.appendChild(groupA);
+
+            // Si es SUMA, añadir símbolo y segundo grupo
+            if(!isSub) {
+                const plus = document.createElement('div');
+                plus.innerHTML = '<span class="text-4xl font-black text-slate-300">+</span>';
+                container.appendChild(plus);
+
+                const groupB = document.createElement('div');
+                groupB.className = 'flex items-end gap-1.5';
+
+                for(let i=0; i < (config.add_t || 0); i++) {
+                    const rod = document.createElement('div');
+                    rod.className = 'ten-rod';
+                    groupB.appendChild(rod);
+                }
+
+                const uWrapB = document.createElement('div');
+                uWrapB.className = 'flex flex-wrap-reverse gap-1 w-[48px]';
+                for(let i=0; i < (config.add_u || 0); i++) {
+                    const cube = document.createElement('div');
+                    cube.className = 'unit-cube';
+                    uWrapB.appendChild(cube);
+                }
+                groupB.appendChild(uWrapB);
+                container.appendChild(groupB);
+            }
+
+            return container;
+        }
+
+        function loadProblem() {
+            canAnswer = true;
+            const p = problems[currentIdx];
+            document.getElementById('nextBtn').classList.add('hidden');
+            document.getElementById('progress').innerText = `${currentIdx + 1} / 22`;
+            document.getElementById('story-text').innerText = p.s;
+            
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+
+            // Generar opciones (1 correcta, 2 incorrectas)
+            let choices = [
+                { data: p.model, isCorrect: true },
+                { data: {...p.model, u: p.model.u + 1, add_u: (p.model.add_u||0)+1, rem_u: (p.model.rem_u||0)+1}, isCorrect: false },
+                { data: {...p.model, t: p.model.t + 1}, isCorrect: false }
+            ];
+
+            choices.sort(() => Math.random() - 0.5);
+
+            choices.forEach(choice => {
+                const btn = document.createElement('div');
+                btn.className = 'option-btn shadow-sm';
+                btn.appendChild(createVisualModel(choice.data, p.type));
+                
+                btn.onclick = () => {
+                    if(!canAnswer) return;
+                    
+                    if(choice.isCorrect) {
+                        btn.classList.add('correct');
+                        canAnswer = false;
+                        speak("¡Muy bien hecho!");
+                        document.getElementById('nextBtn').classList.remove('hidden');
+                    } else {
+                        btn.classList.add('wrong');
+                        totalErrors++;
+                        document.getElementById('error-counter').innerText = `ERRORES: ${totalErrors}`;
+                        speak("Inténtalo de nuevo, cuenta los bloques.");
+                        setTimeout(() => btn.classList.remove('wrong'), 1000);
+                    }
+                };
+                optionsDiv.appendChild(btn);
+            });
+
+            if(currentIdx === 0) setTimeout(() => speak(p.s), 500);
+        }
+
+        document.getElementById('playAudio').onclick = () => speak(problems[currentIdx].s);
+        
+        document.getElementById('nextBtn').onclick = () => {
+            currentIdx++;
+            if(currentIdx < problems.length) {
+                loadProblem();
+            } else {
+                document.getElementById('game-container').classList.add('hidden');
+                document.getElementById('finish-screen').classList.remove('hidden');
+                document.getElementById('final-errors').innerText = `Total de errores: ${totalErrors}`;
+            }
+        };
+
+        window.onload = loadProblem;
+    </script>
+</body>
+</html>
