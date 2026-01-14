@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NWEA: Análisis de Datos y Gráficas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
+        
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background-color: #f8fafc; 
+            color: #1e293b;
+            margin: 0;
+            padding: 10px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .nwea-card {
+            width: 100%;
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            border: 2px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        /* Área de Gráfica */
+        .chart-area {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid #f1f5f9;
+            min-height: 350px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end; /* Importante para vertical */
+            position: relative;
+        }
+
+        /* Estilos Gráfica Horizontal */
+        .chart-container-h {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+        .chart-row-h {
+            display: flex;
+            align-items: center;
+            height: 60px;
+        }
+        .label-box-h {
+            width: 120px;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            color: #64748b;
+            text-align: right;
+            padding-right: 15px;
+        }
+        .bar-container-h {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex-grow: 1;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Estilos Gráfica Vertical */
+        .chart-container-v {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            width: 100%;
+            height: 300px;
+            gap: 20px;
+        }
+        .chart-col-v {
+            display: flex;
+            flex-direction: column-reverse; /* Apila de abajo hacia arriba */
+            align-items: center;
+            flex: 1;
+        }
+        .bar-container-v {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 2px;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 6px;
+            width: 54px;
+            border: 1px solid #e2e8f0;
+        }
+        .label-box-v {
+            margin-top: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            color: #64748b;
+            text-align: center;
+        }
+
+        /* Iconos de las figuras */
+        .unit-item {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .option-btn {
+            border: 3px solid #f1f5f9;
+            border-radius: 18px;
+            padding: 16px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            background: white;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .option-btn:active { transform: scale(0.95); }
+        .option-btn.correct { background: #dcfce7; border-color: #22c55e; color: #166534; }
+        .option-btn.wrong { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+
+        .stat-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 14px;
+            border-radius: 10px;
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center">
+
+    <div class="nwea-card">
+        <!-- Cabecera -->
+        <div class="bg-indigo-600 p-4 flex justify-between items-center text-white">
+            <div class="flex items-center gap-2">
+                <span class="text-xl">📊</span>
+                <h1 class="text-lg font-black uppercase tracking-tight">Análisis de Datos</h1>
+            </div>
+            <div class="flex gap-2">
+                <div class="stat-badge" id="progressText">1 / 22</div>
+                <div class="stat-badge text-yellow-300">⭐ <span id="scoreText">0</span></div>
+            </div>
+        </div>
+
+        <div id="game-area" class="p-6">
+            <!-- Pregunta -->
+            <div class="flex items-center gap-4 mb-6 bg-indigo-50 p-5 rounded-2xl border-2 border-indigo-100">
+                <button id="playAudio" class="bg-indigo-600 text-white p-4 rounded-xl shadow-lg active:scale-90 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    </svg>
+                </button>
+                <h2 id="questionText" class="text-xl font-black text-slate-800 italic">Preparando...</h2>
+            </div>
+
+            <!-- Gráfica -->
+            <div class="chart-area" id="chartArea">
+                <!-- Se genera dinámicamente -->
+            </div>
+
+            <!-- Opciones -->
+            <div class="mt-8">
+                <div id="optionsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                
+                <button id="nextBtn" class="hidden mt-6 bg-emerald-500 text-white w-full py-5 rounded-2xl font-black text-xl shadow-lg hover:bg-emerald-600 transition-all">
+                    SIGUIENTE PREGUNTA ➔
+                </button>
+            </div>
+        </div>
+
+        <!-- Pantalla Final -->
+        <div id="results" class="hidden p-16 text-center">
+            <div class="text-8xl mb-4">🏆</div>
+            <h2 class="text-5xl font-black mb-2 text-slate-800">¡Increíble!</h2>
+            <p class="text-slate-500 text-xl font-bold mb-8">Has terminado la práctica de análisis de datos.</p>
+            <div class="inline-block bg-indigo-100 px-10 py-4 rounded-full text-4xl font-black text-indigo-700 mb-10">
+                Puntos: <span id="finalPoints">0</span> / 22
+            </div>
+            <br>
+            <button onclick="location.reload()" class="bg-slate-900 text-white px-12 py-4 rounded-2xl font-bold text-xl">VOLVER A JUGAR</button>
+        </div>
+    </div>
+
+    <script>
+        const themes = {
+            figuras: [
+                { id: 'cuadrado', icon: '🟦', name: 'cuadrado' },
+                { id: 'circulo', icon: '🟢', name: 'círculo' },
+                { id: 'triangulo', icon: '🔺', name: 'triángulo' },
+                { id: 'estrella', icon: '⭐', name: 'estrella' },
+                { id: 'corazon', icon: '❤️', name: 'corazón' }
+            ],
+            frutas: [
+                { id: 'manzana', icon: '🍎', name: 'manzana' },
+                { id: 'platano', icon: '🍌', name: 'plátano' },
+                { id: 'uva', icon: '🍇', name: 'uva' },
+                { id: 'fresa', icon: '🍓', name: 'fresa' },
+                { id: 'naranja', icon: '🍊', name: 'naranja' }
+            ],
+            utiles: [
+                { id: 'lapiz', icon: '✏️', name: 'lápiz' },
+                { id: 'libro', icon: '📖', name: 'libro' },
+                { id: 'mochila', icon: '🎒', name: 'mochila' },
+                { id: 'regla', icon: '📏', name: 'regla' },
+                { id: 'tijeras', icon: '✂️', name: 'tijeras' }
+            ]
+        };
+
+        let currentIdx = 0;
+        let points = 0;
+        let canAnswer = true;
+        let currentProblem = null;
+
+        function speak(text) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const ut = new SpeechSynthesisUtterance(text);
+            ut.lang = 'es-MX';
+            ut.rate = 0.9;
+            window.speechSynthesis.speak(ut);
+        }
+
+        function generateProblem() {
+            const categories = Object.keys(themes);
+            const selectedCategory = categories[Math.floor(Math.random() * categories.length)];
+            const themeSet = themes[selectedCategory];
+            const orientation = Math.random() > 0.5 ? 'vertical' : 'horizontal';
+            
+            let themeLabel = "objetos";
+            if(selectedCategory === 'frutas') themeLabel = "frutas";
+            if(selectedCategory === 'figuras') themeLabel = "figuras";
+            if(selectedCategory === 'utiles') themeLabel = "útiles escolares";
+
+            const selected = [...themeSet].sort(() => 0.5 - Math.random()).slice(0, 4);
+            const data = selected.map(item => ({
+                ...item,
+                count: Math.floor(Math.random() * 6) + 1 // Reducido a 6 para que quepa bien verticalmente
+            }));
+
+            const types = ['count', 'max', 'min', 'more_than', 'less_than'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            let question = "";
+            let correctAnswer = "";
+            let options = [];
+
+            switch(type) {
+                case 'count':
+                    const target = data[Math.floor(Math.random() * data.length)];
+                    question = `¿Cuántos ${target.name}s hay?`;
+                    correctAnswer = target.count;
+                    options = [correctAnswer, correctAnswer + 1, correctAnswer - 1, 8].filter(n => n > 0);
+                    break;
+                case 'max':
+                    question = `¿De cuál ${themeLabel.slice(0, -1)} hay más cantidad?`;
+                    const maxVal = Math.max(...data.map(d => d.count));
+                    correctAnswer = data.find(d => d.count === maxVal).name;
+                    options = data.map(d => d.name);
+                    break;
+                case 'min':
+                    question = `¿De cuál ${themeLabel.slice(0, -1)} hay menos cantidad?`;
+                    const minVal = Math.min(...data.map(d => d.count));
+                    correctAnswer = data.find(d => d.count === minVal).name;
+                    options = data.map(d => d.name);
+                    break;
+                case 'more_than':
+                    const sortedM = [...data].sort((a, b) => b.count - a.count);
+                    question = `¿Cuántos más ${sortedM[0].name}s hay que ${sortedM[1].name}s?`;
+                    correctAnswer = sortedM[0].count - sortedM[1].count;
+                    options = [correctAnswer, correctAnswer + 1, 1, 2];
+                    break;
+                case 'less_than':
+                    const sortedL = [...data].sort((a, b) => a.count - b.count);
+                    question = `¿Cuántos menos ${sortedL[0].name}s hay que ${sortedL[2].name}s?`;
+                    correctAnswer = sortedL[2].count - sortedL[0].count;
+                    options = [correctAnswer, correctAnswer + 1, 2, 3];
+                    break;
+            }
+
+            options = [...new Set(options)].sort(() => Math.random() - 0.5);
+            if (!options.includes(correctAnswer)) options.push(correctAnswer);
+
+            return { data, question, correctAnswer, options: options.slice(0, 4), orientation };
+        }
+
+        function loadLevel() {
+            currentProblem = generateProblem();
+            canAnswer = true;
+            document.getElementById('nextBtn').classList.add('hidden');
+            document.getElementById('progressText').innerText = `${currentIdx + 1} / 22`;
+            document.getElementById('scoreText').innerText = points;
+            document.getElementById('questionText').innerText = currentProblem.question;
+
+            const container = document.getElementById('chartArea');
+            container.innerHTML = '';
+
+            if (currentProblem.orientation === 'horizontal') {
+                const inner = document.createElement('div');
+                inner.className = 'chart-container-h';
+                currentProblem.data.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'chart-row-h';
+                    row.innerHTML = `<div class="label-box-h">${item.name}</div>`;
+                    const bar = document.createElement('div');
+                    bar.className = 'bar-container-h';
+                    for(let i=0; i<item.count; i++) bar.innerHTML += `<div class="unit-item">${item.icon}</div>`;
+                    row.appendChild(bar);
+                    inner.appendChild(row);
+                });
+                container.appendChild(inner);
+            } else {
+                const inner = document.createElement('div');
+                inner.className = 'chart-container-v';
+                currentProblem.data.forEach(item => {
+                    const col = document.createElement('div');
+                    col.className = 'chart-col-v';
+                    const bar = document.createElement('div');
+                    bar.className = 'bar-container-v';
+                    for(let i=0; i<item.count; i++) bar.innerHTML += `<div class="unit-item">${item.icon}</div>`;
+                    col.appendChild(bar);
+                    col.innerHTML += `<div class="label-box-v">${item.name}</div>`;
+                    inner.appendChild(col);
+                });
+                container.appendChild(inner);
+            }
+
+            // Opciones
+            const grid = document.getElementById('optionsGrid');
+            grid.innerHTML = '';
+            currentProblem.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => check(opt, btn);
+                grid.appendChild(btn);
+            });
+
+            if(currentIdx > 0) setTimeout(() => speak(currentProblem.question), 600);
+        }
+
+        function check(val, btn) {
+            if (!canAnswer) return;
+            canAnswer = false;
+            if (val === currentProblem.correctAnswer) {
+                btn.classList.add('correct');
+                points++;
+                speak("¡Excelente!");
+            } else {
+                btn.classList.add('wrong');
+                speak(`No, es ${currentProblem.correctAnswer}.`);
+                Array.from(document.getElementsByClassName('option-btn')).forEach(b => {
+                    if(b.innerText == currentProblem.correctAnswer) b.classList.add('correct');
+                });
+            }
+            document.getElementById('nextBtn').classList.remove('hidden');
+        }
+
+        document.getElementById('playAudio').onclick = () => speak(currentProblem.question);
+        document.getElementById('nextBtn').onclick = () => {
+            currentIdx++;
+            if (currentIdx < 22) loadLevel();
+            else {
+                document.getElementById('game-area').classList.add('hidden');
+                document.getElementById('results').classList.remove('hidden');
+                document.getElementById('finalPoints').innerText = points;
+            }
+        };
+
+        window.onload = loadLevel;
+    </script>
+</body>
+</html>
