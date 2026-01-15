@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Desafío de Modelos de Suma</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f0f4f8;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .x-block {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: clamp(18px, 5vw, 24px);
+            height: clamp(18px, 5vw, 24px);
+            background-color: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 900;
+            color: #334155;
+            margin: 1px;
+        }
+
+        .option-card {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            border: 4px solid transparent;
+            background: #f8fafc;
+        }
+
+        .option-card:active {
+            transform: scale(0.95);
+        }
+
+        .correct {
+            border-color: #22c55e !important;
+            background-color: #f0fdf4 !important;
+        }
+
+        .incorrect {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2 !important;
+            opacity: 0.7;
+        }
+
+        .stats-badge {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4">
+
+    <div class="w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200">
+        <!-- Barra de Progreso y Errores -->
+        <div class="bg-indigo-600 p-6 text-white">
+            <div class="flex justify-between items-center mb-4">
+                <span class="stats-badge" id="progress-text">Problema 1 de 22</span>
+                <span class="stats-badge bg-red-500/30 text-red-100 font-bold" id="error-count">Errores: 0</span>
+            </div>
+            <div class="text-center">
+                <h2 class="text-indigo-100 text-xs font-bold uppercase tracking-[0.2em] mb-1">Resuelve la suma</h2>
+                <div id="equation-display" class="text-5xl md:text-6xl font-black tracking-tight drop-shadow-md">
+                    4 + 4 + 4 = 12
+                </div>
+            </div>
+        </div>
+
+        <!-- Instrucción -->
+        <div class="p-6 pb-2 text-center">
+            <p class="text-slate-600 font-semibold text-lg">Toca el modelo que representa la suma</p>
+        </div>
+
+        <!-- Cuadrícula de Opciones -->
+        <div id="options-grid" class="p-4 grid grid-cols-2 gap-4">
+            <!-- Dinámico -->
+        </div>
+
+        <!-- Feedback -->
+        <div class="px-6 pb-8 text-center min-h-[60px] flex items-center justify-center">
+            <p id="feedback-text" class="font-bold text-xl transition-all duration-300"></p>
+        </div>
+    </div>
+
+    <!-- Pantalla de Resultados Final -->
+    <div id="final-screen" class="fixed inset-0 bg-indigo-900 z-50 flex-col items-center justify-center text-white p-8 text-center hidden">
+        <h1 class="text-5xl font-black mb-4">¡Reto Completado! 🏆</h1>
+        <p class="text-2xl mb-8" id="final-stats"></p>
+        <button onclick="location.reload()" class="bg-white text-indigo-600 px-10 py-4 rounded-full font-black text-xl hover:bg-indigo-50 transition-colors">
+            JUGAR DE NUEVO
+        </button>
+    </div>
+
+    <script>
+        // Configuración de Problemas (22 problemas predefinidos)
+        const problems = [
+            [4,4,4], [2,2,2], [3,3,3], [5,5,5], [2,3,2], 
+            [4,2,4], [3,2,3], [5,2,5], [2,5,2], [3,4,3],
+            [4,3,4], [2,4,2], [5,3,5], [3,5,3], [4,5,4],
+            [3,3,2], [2,2,3], [4,4,2], [2,2,4], [5,5,2],
+            [2,2,5], [3,3,4]
+        ];
+
+        let currentIdx = 0;
+        let errors = 0;
+        let isProcessing = false;
+        let selectedVoice = null;
+
+        // --- Lógica de Voz Optimizada para iOS ---
+        function initVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            // Prioridad: Sofía, Sandra, Niña, Female, y finalmente es-MX genérica
+            const preferredPatterns = [/Sofía/i, /Sandra/i, /Niña/i, /Female/i, /Femenina/i, /es-MX/i];
+            
+            for (let pattern of preferredPatterns) {
+                const found = voices.find(v => pattern.test(v.name) && (v.lang.includes('es')));
+                if (found) {
+                    selectedVoice = found;
+                    break;
+                }
+            }
+            if (!selectedVoice) selectedVoice = voices.find(v => v.lang.includes('es'));
+        }
+
+        window.speechSynthesis.onvoiceschanged = initVoices;
+
+        function speak(text) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.voice = selectedVoice;
+            utter.lang = 'es-MX';
+            utter.rate = 0.9;  // Ligeramente más lento
+            utter.pitch = 1.2; // Tono más agudo / infantil
+            window.speechSynthesis.speak(utter);
+        }
+
+        // --- Lógica del Juego ---
+        function createModelHTML(a, b, c) {
+            let html = '<div class="flex flex-col items-center justify-center gap-1">';
+            [a, b, c].forEach(num => {
+                html += '<div class="flex flex-wrap justify-center">';
+                for(let i=0; i<num; i++) html += '<div class="x-block">X</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function loadQuestion() {
+            if (currentIdx >= problems.length) {
+                showFinalResults();
+                return;
+            }
+
+            isProcessing = false;
+            const config = problems[currentIdx];
+            const a = config[0], b = config[1], c = config[2];
+            const total = a + b + c;
+
+            // Actualizar UI
+            document.getElementById('progress-text').innerText = `Problema ${currentIdx + 1} de 22`;
+            document.getElementById('error-count').innerText = `Errores: ${errors}`;
+            document.getElementById('equation-display').innerText = `${a} + ${b} + ${c} = ${total}`;
+            document.getElementById('feedback-text').innerText = "";
+            document.getElementById('feedback-text').className = "font-bold text-xl";
+
+            const grid = document.getElementById('options-grid');
+            grid.innerHTML = '';
+
+            // Generar opciones (1 correcta + 3 incorrectas)
+            let options = [{ a, b, c, correct: true }];
+            
+            while(options.length < 4) {
+                const fa = Math.floor(Math.random() * 4) + 2;
+                const fb = Math.floor(Math.random() * 4) + 2;
+                const fc = Math.floor(Math.random() * 4) + 2;
+                
+                if (fa === a && fb === b && fc === c) continue;
+                if (options.some(o => o.a === fa && o.b === fb && o.c === fc)) continue;
+                
+                options.push({ a: fa, b: fb, c: fc, correct: false });
+            }
+
+            options.sort(() => Math.random() - 0.5);
+
+            options.forEach(opt => {
+                const card = document.createElement('div');
+                card.className = 'option-card rounded-[2rem] p-4 flex items-center justify-center min-h-[140px] shadow-md';
+                card.innerHTML = createModelHTML(opt.a, opt.b, opt.c);
+                card.onclick = () => checkAnswer(card, opt.correct);
+                grid.appendChild(card);
+            });
+        }
+
+        function checkAnswer(element, isCorrect) {
+            if (isProcessing) return;
+
+            if (isCorrect) {
+                isProcessing = true;
+                element.classList.add('correct');
+                const msgs = ["¡Bien hecho!", "¡Excelente!", "¡Eres un genio!", "¡Correcto!"];
+                const msg = msgs[Math.floor(Math.random() * msgs.length)];
+                
+                document.getElementById('feedback-text').innerText = msg;
+                document.getElementById('feedback-text').classList.add('text-green-600');
+                speak(msg);
+
+                setTimeout(() => {
+                    currentIdx++;
+                    loadQuestion();
+                }, 1500);
+            } else {
+                if (!element.classList.contains('incorrect')) {
+                    errors++;
+                    document.getElementById('error-count').innerText = `Errores: ${errors}`;
+                    element.classList.add('incorrect');
+                    document.getElementById('feedback-text').innerText = "Vuelve a contar las filas...";
+                    document.getElementById('feedback-text').classList.add('text-red-500');
+                    speak("Ese no es. Cuenta con cuidado cada fila.");
+                }
+            }
+        }
+
+        function showFinalResults() {
+            const screen = document.getElementById('final-screen');
+            screen.style.display = 'flex';
+            document.getElementById('final-stats').innerText = 
+                `Terminaste los 22 problemas con un total de ${errors} ${errors === 1 ? 'error' : 'errores'}.`;
+            speak(`¡Reto completado! Tuviste ${errors} errores. ¡Buen trabajo!`);
+        }
+
+        // Iniciar voces al cargar
+        window.onload = () => {
+            initVoices();
+            loadQuestion();
+        };
+    </script>
+</body>
+</html>
