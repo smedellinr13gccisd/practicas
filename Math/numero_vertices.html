@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Desafío de Vértices 2D - iOS Ready</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f0f4f8;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .shape-card {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            border: 4px solid #e2e8f0;
+            background: white;
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shape-card.selected-correct {
+            border-color: #22c55e !important;
+            background-color: #f0fdf4 !important;
+            transform: scale(0.98);
+        }
+
+        .shape-card.selected-wrong {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2 !important;
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        svg {
+            width: 75%;
+            height: 75%;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4">
+
+    <div class="w-full max-w-3xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200">
+        <!-- Encabezado -->
+        <div class="bg-gradient-to-r from-pink-500 to-rose-500 p-6 text-white text-center">
+            <div class="flex justify-between items-center mb-4 text-sm font-bold opacity-90">
+                <span id="progress-tag">Reto: 1 / 40</span>
+                <span id="error-tag">Errores: 0</span>
+            </div>
+            <h1 id="instruction-text" class="text-3xl md:text-4xl font-black mb-2">
+                ¡Hola! Vamos a jugar
+            </h1>
+            <p id="sub-instruction" class="text-rose-100 font-medium italic">Toca el botón para empezar</p>
+        </div>
+
+        <!-- Tablero -->
+        <div class="p-4 md:p-8">
+            <div id="game-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4 min-h-[300px] items-center justify-center">
+                <!-- Botón de Inicio para desbloquear Audio en iOS -->
+                <div class="col-span-full flex flex-col items-center gap-4">
+                     <button id="start-btn" class="bg-indigo-600 text-white font-black py-6 px-12 rounded-3xl text-2xl shadow-xl hover:bg-indigo-700 transition-all">
+                        ¡EMPEZAR JUEGO!
+                     </button>
+                     <p class="text-slate-400 text-sm">Necesitamos tu permiso para hablar</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón Siguiente -->
+        <div class="px-8 pb-8 flex justify-center">
+            <button id="next-btn" class="hidden bg-green-500 hover:bg-green-600 text-white font-black py-4 px-10 rounded-2xl text-xl shadow-lg transform transition-all active:scale-95">
+                ¡SIGUIENTE NIVEL! ➔
+            </button>
+        </div>
+    </div>
+
+    <!-- Pantalla Final -->
+    <div id="finish-screen" class="fixed inset-0 bg-rose-600 z-50 hidden flex-col items-center justify-center text-center p-6">
+        <div class="bg-white rounded-[3rem] p-10 max-w-sm w-full shadow-2xl">
+            <div class="text-6xl mb-4">⭐</div>
+            <h2 class="text-3xl font-black text-slate-800 mb-2">¡Increíble!</h2>
+            <p id="final-stats" class="text-slate-600 mb-8"></p>
+            <button onclick="location.reload()" class="w-full bg-pink-600 text-white font-bold py-4 rounded-2xl text-lg">JUGAR OTRA VEZ</button>
+        </div>
+    </div>
+
+    <script>
+        let currentProblem = 1;
+        let totalErrors = 0;
+        let targetVertices = 3;
+        let foundInCurrent = 0;
+        let totalCorrectInCurrent = 0;
+        let selectedVoice = null;
+        const synth = window.speechSynthesis;
+
+        // --- Lógica de Voz Optimizada para iOS ---
+        function loadVoices() {
+            const voices = synth.getVoices();
+            if (voices.length === 0) return;
+
+            // Prioridad: Español + (Sofía/Sandra/Niña/Femenina)
+            const preferredKeywords = ['sofia', 'sandra', 'niña', 'femenina', 'female', 'monica', 'paulina'];
+            
+            // Filtrar solo voces en español
+            const spanishVoices = voices.filter(v => v.lang.startsWith('es'));
+            
+            // Buscar por palabras clave
+            let voice = spanishVoices.find(v => 
+                preferredKeywords.some(key => v.name.toLowerCase().includes(key))
+            );
+
+            // Fallback 1: Cualquier voz de México (es-MX)
+            if (!voice) {
+                voice = spanishVoices.find(v => v.lang.includes('MX'));
+            }
+
+            // Fallback 2: Cualquier voz en español
+            if (!voice) {
+                voice = spanishVoices[0];
+            }
+
+            selectedVoice = voice;
+        }
+
+        // Evento crucial para Safari/iOS
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        function speak(text) {
+            if (!selectedVoice) loadVoices(); // Re-intento si no cargó
+            
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.voice = selectedVoice;
+            utter.lang = selectedVoice ? selectedVoice.lang : 'es-MX';
+            
+            // Parámetros solicitados
+            utter.rate = 0.9;  // Ligeramente lento
+            utter.pitch = 1.2; // Tono agudo/infantil
+            utter.volume = 1.0;
+
+            synth.cancel(); // Detener cualquier audio previo
+            synth.speak(utter);
+        }
+
+        // --- Lógica del Juego ---
+        const colors = ['#60a5fa', '#f87171', '#fbbf24', '#34d399', '#a78bfa', '#f472b6', '#fb923c'];
+
+        function getShapeSVG(vertices, color) {
+            const points = [];
+            const center = 50;
+            const radius = 35;
+            for (let i = 0; i < vertices; i++) {
+                const angle = (i / vertices) * 2 * Math.PI - Math.PI / 2;
+                const x = center + radius * Math.cos(angle);
+                const y = center + radius * Math.sin(angle);
+                points.push(`${x},${y}`);
+            }
+            return `
+                <svg viewBox="0 0 100 100">
+                    <polygon points="${points.join(' ')}" fill="${color}" stroke="#1e293b" stroke-width="4" stroke-linejoin="round" />
+                    ${points.map(p => `<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="4" fill="#1e293b"/>`).join('')}
+                </svg>
+            `;
+        }
+
+        function setupLevel() {
+            if (currentProblem > 40) {
+                showFinal();
+                return;
+            }
+
+            const possibleTargets = [3, 4, 5, 6];
+            targetVertices = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+            
+            document.getElementById('instruction-text').innerText = `Busca figuras de ${targetVertices} vértices`;
+            document.getElementById('sub-instruction').innerText = `Cuenta las esquinitas de las figuras`;
+            document.getElementById('progress-tag').innerText = `Reto: ${currentProblem} / 40`;
+            document.getElementById('next-btn').classList.add('hidden');
+            
+            const grid = document.getElementById('game-grid');
+            grid.innerHTML = '';
+            
+            foundInCurrent = 0;
+            totalCorrectInCurrent = 0;
+
+            let options = [];
+            const correctCount = Math.floor(Math.random() * 2) + 2; 
+            totalCorrectInCurrent = correctCount;
+
+            for(let i=0; i < 8; i++) {
+                let v;
+                if (i < correctCount) {
+                    v = targetVertices;
+                } else {
+                    do { v = Math.floor(Math.random() * 4) + 3; } while (v === targetVertices);
+                }
+                options.push({ vertices: v, color: colors[Math.floor(Math.random() * colors.length)] });
+            }
+
+            options.sort(() => Math.random() - 0.5);
+
+            options.forEach(opt => {
+                const card = document.createElement('div');
+                card.className = 'shape-card rounded-[2rem] shadow-sm';
+                card.innerHTML = getShapeSVG(opt.vertices, opt.color);
+                
+                card.onclick = () => {
+                    if (card.classList.contains('selected-correct') || card.classList.contains('selected-wrong')) return;
+
+                    if (opt.vertices === targetVertices) {
+                        card.classList.add('selected-correct');
+                        foundInCurrent++;
+                        speak("¡Correcto!");
+                        checkCompletion();
+                    } else {
+                        card.classList.add('selected-wrong');
+                        totalErrors++;
+                        document.getElementById('error-tag').innerText = `Errores: ${totalErrors}`;
+                        speak("¡Oh no! Cuenta otra vez.");
+                    }
+                };
+                grid.appendChild(card);
+            });
+
+            speak(`Selecciona todas las figuras que tengan ${targetVertices} vértices.`);
+        }
+
+        function checkCompletion() {
+            if (foundInCurrent === totalCorrectInCurrent) {
+                document.getElementById('next-btn').classList.remove('hidden');
+                speak("¡Lo lograste! Presiona el botón verde para seguir.");
+            }
+        }
+
+        function showFinal() {
+            document.getElementById('finish-screen').classList.remove('hidden');
+            document.getElementById('finish-screen').classList.add('flex');
+            document.getElementById('final-stats').innerText = `Terminaste los 40 retos con ${totalErrors} errores. ¡Eres genial!`;
+            speak("¡Felicidades! Terminaste todo el juego. ¡Eres un campeón o campeona!");
+        }
+
+        document.getElementById('start-btn').onclick = () => {
+            loadVoices();
+            setupLevel();
+        };
+
+        document.getElementById('next-btn').onclick = () => {
+            currentProblem++;
+            setupLevel();
+        };
+
+        // Carga inicial de voces
+        window.onload = loadVoices;
+    </script>
+</body>
+</html>
