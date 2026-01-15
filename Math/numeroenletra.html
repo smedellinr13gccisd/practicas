@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Práctica de Números - Escritura</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            -webkit-tap-highlight-color: transparent; 
+            touch-action: manipulation; 
+            background-color: #f8fafc;
+            overflow: hidden;
+        }
+        .option-card { transition: all 0.2s ease; }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
+        .float-anim { animation: float 3s ease-in-out infinite; }
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+    </style>
+</head>
+<body class="font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useRef } = React;
+
+        const NUMEROS_LETRAS = [
+            "cero", "uno", "dos", "tres", "cuatro", "cinco", 
+            "seis", "siete", "ocho", "nueve", "diez", 
+            "once", "doce", "trece", "catorce", "quince", 
+            "dieciséis", "diecisiete", "dieciocho", "diecinueve", "veinte"
+        ];
+
+        const App = () => {
+            const [gameState, setGameState] = useState('welcome');
+            const [currentNumber, setCurrentNumber] = useState(null);
+            const [options, setOptions] = useState([]);
+            const [problemCount, setProblemCount] = useState(1);
+            const [score, setScore] = useState(0);
+            const [errorCount, setErrorCount] = useState(0);
+            const [feedback, setFeedback] = useState(null);
+            const [errors, setErrors] = useState([]); 
+            const [voices, setVoices] = useState([]);
+            
+            const lastNumberRef = useRef(null);
+            const synth = window.speechSynthesis;
+
+            const loadVoices = useCallback(() => {
+                const availableVoices = synth.getVoices();
+                setVoices(availableVoices);
+            }, [synth]);
+
+            useEffect(() => {
+                loadVoices();
+                if (typeof synth !== 'undefined' && synth.onvoiceschanged !== undefined) {
+                    synth.onvoiceschanged = loadVoices;
+                }
+            }, [loadVoices]);
+
+            const getBestVoice = useCallback(() => {
+                const priorityKeywords = ['sofía', 'sandra', 'femenina', 'female', 'paulína', 'monica', 'child'];
+                const spanishVoices = voices.filter(v => v.lang.startsWith('es'));
+                
+                for (let keyword of priorityKeywords) {
+                    const found = spanishVoices.find(v => v.name.toLowerCase().includes(keyword));
+                    if (found) return found;
+                }
+                
+                const mxVoice = spanishVoices.find(v => v.lang === 'es-MX');
+                return mxVoice || spanishVoices[0] || null;
+            }, [voices]);
+
+            const speak = (text) => {
+                if (!synth) return;
+                synth.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                const voice = getBestVoice();
+                
+                if (voice) utterance.voice = voice;
+                utterance.rate = 1.0;
+                utterance.pitch = 1.1;
+                utterance.lang = 'es-ES';
+                
+                synth.speak(utterance);
+            };
+
+            const generateProblem = useCallback(() => {
+                let nextNum;
+                do {
+                    nextNum = Math.floor(Math.random() * 21);
+                } while (nextNum === lastNumberRef.current);
+
+                lastNumberRef.current = nextNum;
+                setCurrentNumber(nextNum);
+
+                let choices = [NUMEROS_LETRAS[nextNum]];
+                while (choices.length < 4) {
+                    const randomNum = Math.floor(Math.random() * 21);
+                    const word = NUMEROS_LETRAS[randomNum];
+                    if (!choices.includes(word)) choices.push(word);
+                }
+                setOptions(choices.sort(() => Math.random() - 0.5));
+                setFeedback(null);
+                
+                setTimeout(() => speak("¿Cómo se escribe este número?"), 300);
+            }, [voices]);
+
+            const handleAnswer = (choice) => {
+                if (feedback) return;
+
+                const correctWord = NUMEROS_LETRAS[currentNumber];
+                
+                if (choice === correctWord) {
+                    setFeedback('correct');
+                    setScore(s => s + 1);
+                    speak("¡Correcto!");
+                } else {
+                    setFeedback('wrong');
+                    setErrorCount(e => e + 1);
+                    setErrors(prev => {
+                        if (!prev.find(e => e.num === currentNumber)) {
+                            return [...prev, { num: currentNumber, word: correctWord }];
+                        }
+                        return prev;
+                    });
+                    speak("Inténtalo de nuevo.");
+                }
+
+                if (problemCount < 45) {
+                    setTimeout(() => {
+                        setProblemCount(p => p + 1);
+                        generateProblem();
+                    }, 1200);
+                } else {
+                    setTimeout(() => setGameState('end'), 1200);
+                }
+            };
+
+            const startApp = () => {
+                setGameState('playing');
+                setScore(0);
+                setErrorCount(0);
+                setProblemCount(1);
+                setErrors([]);
+                generateProblem();
+            };
+
+            const handleSpeakOption = (e, opt) => {
+                e.stopPropagation();
+                speak(opt);
+            };
+
+            if (gameState === 'welcome') {
+                return (
+                    <div className="h-screen flex flex-col items-center justify-center p-6 text-center bg-slate-50">
+                        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full border-b-8 border-blue-500">
+                            <h1 className="text-3xl font-bold text-slate-800 mb-2">Aprende los Números</h1>
+                            <p className="text-slate-500 mb-8">Selecciona la palabra correcta.</p>
+                            <button 
+                                onClick={startApp} 
+                                className="bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold py-4 px-12 rounded-2xl shadow-lg transform active:scale-95 transition-all w-full"
+                            >
+                                ¡Empezar!
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (gameState === 'end') {
+                return (
+                    <div className="h-screen flex flex-col p-6 overflow-y-auto bg-white">
+                        <div className="text-center mb-6">
+                            <h2 className="text-2xl font-bold text-slate-800 mb-1">¡Buen trabajo!</h2>
+                            <div className="flex justify-center gap-4 text-lg">
+                                <span className="text-green-600 font-bold">Puntos: {score}</span>
+                                <span className="text-red-500 font-bold">Errores: {errorCount}</span>
+                            </div>
+                        </div>
+
+                        {errors.length > 0 && (
+                            <div className="flex-1 overflow-y-auto mb-6">
+                                <h3 className="text-slate-500 font-bold text-xs uppercase mb-3">Números para repasar:</h3>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {errors.map((err, i) => (
+                                        <div key={i} className="bg-slate-50 p-3 rounded-lg border border-slate-200 flex flex-col items-center">
+                                            <span className="font-bold text-xl text-blue-600">{err.num}</span>
+                                            <span className="text-slate-500 text-[10px] uppercase font-bold tracking-tight">{err.word}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <button onClick={() => setGameState('welcome')} className="bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md active:scale-95 transition-all">
+                            Volver a jugar
+                        </button>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="h-screen w-full flex flex-col p-3 max-w-md mx-auto overflow-hidden">
+                    {/* Header Compacto */}
+                    <div className="flex justify-between items-center mb-2 px-1">
+                        <div className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">PROGRESO {problemCount}/45</div>
+                        <div className="flex gap-2">
+                            <div className="bg-red-50 text-red-600 px-2 py-0.5 rounded-lg font-bold text-[11px] border border-red-100">
+                                Errores: {errorCount}
+                            </div>
+                            <div className="bg-green-50 text-green-600 px-2 py-0.5 rounded-lg font-bold text-[11px] border border-green-100">
+                                Puntos: {score}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Caja de Número Reducida */}
+                    <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col items-center mb-3 border border-slate-100 relative">
+                        <div className={`text-7xl font-black text-blue-600 leading-tight float-anim ${feedback === 'wrong' ? 'shake' : ''}`}>
+                            {currentNumber}
+                        </div>
+                        <button 
+                            onClick={() => speak("¿Cómo se escribe este número?")}
+                            className="absolute bottom-2 right-2 bg-slate-50 text-blue-400 p-2 rounded-full active:scale-90 transition-all border border-slate-100"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2V15H6L11 19V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                        </button>
+                    </div>
+
+                    {/* Opciones */}
+                    <div className="grid grid-cols-1 gap-2 flex-1">
+                        {options.map((opt, i) => (
+                            <button
+                                key={i}
+                                onClick={() => handleAnswer(opt)}
+                                disabled={!!feedback}
+                                className={`group relative w-full py-4 px-6 rounded-xl text-xl font-bold border-2 transition-all flex items-center justify-between
+                                    ${feedback === 'correct' && opt === NUMEROS_LETRAS[currentNumber] ? 'bg-green-500 text-white border-green-600' : 
+                                      feedback === 'wrong' && opt === NUMEROS_LETRAS[currentNumber] ? 'bg-green-100 text-green-800 border-green-200' :
+                                      feedback === 'wrong' && opt !== NUMEROS_LETRAS[currentNumber] ? 'bg-white opacity-40 border-slate-100' :
+                                      'bg-white text-slate-700 border-slate-200 active:scale-[0.98]'}`}
+                            >
+                                <span className="flex-1 text-center">{opt}</span>
+                                <div 
+                                    onClick={(e) => handleSpeakOption(e, opt)}
+                                    className={`p-2 rounded-lg ${feedback ? 'hidden' : 'bg-slate-50 text-slate-300'}`}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2V15H6L11 19V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Mensaje de Feedback */}
+                    <div className="h-10 flex items-center justify-center mt-1">
+                        {feedback === 'correct' && <span className="text-green-600 font-bold text-sm animate-pulse">✨ ¡Muy bien!</span>}
+                        {feedback === 'wrong' && <span className="text-red-500 font-bold text-sm">Inténtalo de nuevo</span>}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
