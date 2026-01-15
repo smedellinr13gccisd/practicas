@@ -22,7 +22,7 @@
         }
     </style>
 </head>
-<body class="bg-sky-50 font-sans">
+<body class="bg-slate-100 font-sans">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -34,13 +34,6 @@
                 volume2: <path d="M11 5L6 9H2v6h4l5 4V5zm4.54 3.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" />,
                 star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />,
                 check: <polyline points="20 6 9 17 4 12" />,
-                alert: (
-                    <React.Fragment>
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="8" x2="12" y2="12" />
-                        <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </React.Fragment>
-                ),
                 xCircle: (
                     <React.Fragment>
                         <circle cx="12" cy="12" r="10" />
@@ -57,12 +50,12 @@
                     viewBox="0 0 24 24" 
                     fill="none" 
                     stroke="currentColor" 
-                    strokeWidth="2" 
+                    strokeWidth="3" 
                     strokeLinecap="round" 
                     strokeLinejoin="round" 
                     className={className}
                 >
-                    {icons[name.toLowerCase()] || icons[name] || null}
+                    {icons[name.toLowerCase()] || null}
                 </svg>
             );
         };
@@ -72,8 +65,7 @@
             const [tens, setTens] = useState('');
             const [units, setUnits] = useState('');
             const [level, setLevel] = useState(1);
-            const [score, setScore] = useState(0);
-            const [errors, setErrors] = useState(0); // Nuevo estado para errores
+            const [errors, setErrors] = useState(0);
             const [status, setStatus] = useState('idle');
             const [selectedVoice, setSelectedVoice] = useState(null);
             const [hasInteracted, setHasInteracted] = useState(false);
@@ -84,7 +76,7 @@
             const initSpeech = useCallback(() => {
                 if (!synth) return;
                 const voices = synth.getVoices();
-                const preferredKeywords = ['sofia', 'sandra', 'niña', 'femenina', 'female', 'monica', 'paulina', 'google español'];
+                const preferredKeywords = ['sofia', 'sandra', 'femenina', 'female', 'monica', 'google español'];
                 const spanishVoices = voices.filter(v => v.lang.startsWith('es'));
                 
                 let voice = spanishVoices.find(v => 
@@ -113,7 +105,7 @@
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.voice = selectedVoice;
                 utterance.rate = 0.9;
-                utterance.pitch = 1.2;
+                utterance.pitch = 1.1;
                 synth.speak(utterance);
             };
 
@@ -134,41 +126,47 @@
                 const correctTens = Math.floor(currentNumber / 10);
                 const correctUnits = currentNumber % 10;
 
-                if (parseInt(tens) === correctTens && parseInt(units) === correctUnits) {
+                const inputTens = parseInt(tens);
+                const inputUnits = parseInt(units);
+
+                if (inputTens === correctTens && inputUnits === correctUnits) {
                     setStatus('correct');
-                    setScore(s => s + 1);
                     speak(`¡Excelente! El número ${currentNumber} tiene ${correctTens} decenas y ${correctUnits} unidades.`);
                     
                     setTimeout(() => {
                         if (level < TOTAL_LEVELS) {
-                            setLevel(l => l + 1);
+                            setLevel(prev => prev + 1);
                             generateExercise();
                         } else {
                             setStatus('finished');
-                            speak("¡Felicidades! Has completado todos los ejercicios.");
+                            speak("¡Increíble! Has terminado todos los niveles.");
                         }
-                    }, 2500);
+                    }, 2000);
                 } else {
                     setStatus('wrong');
-                    setErrors(e => e + 1); // Incrementar contador de errores
-                    speak("Esa no es la respuesta correcta. Inténtalo de nuevo.");
+                    // Actualización de errores con función de retorno para asegurar consistencia
+                    setErrors(prevErrors => prevErrors + 1);
+                    speak("Ese no es. ¡Sigue intentando!");
                     setTimeout(() => setStatus('idle'), 1500);
                 }
             };
 
             if (status === 'finished') {
                 return (
-                    <div className="min-h-screen flex items-center justify-center p-6">
-                        <div className="bg-white rounded-[3rem] shadow-2xl p-10 max-w-sm w-full text-center border-b-8 border-orange-200">
-                            <Icon name="trophy" size={80} className="text-yellow-400 mx-auto mb-4" />
-                            <h1 className="text-4xl font-black text-orange-600 mb-2">¡GENIAL!</h1>
-                            <p className="text-xl text-slate-600 font-bold mb-4">Completaste los {TOTAL_LEVELS} niveles.</p>
-                            <div className="bg-red-50 text-red-600 rounded-2xl py-3 px-6 mb-8 inline-block font-black border-2 border-red-100">
-                                ERRORES TOTALES: {errors}
+                    <div className="min-h-screen flex items-center justify-center p-6 bg-yellow-50">
+                        <div className="bg-white rounded-[3.5rem] shadow-2xl p-10 max-w-sm w-full text-center border-b-[12px] border-yellow-200">
+                            <Icon name="trophy" size={100} className="text-yellow-400 mx-auto mb-6" />
+                            <h1 className="text-5xl font-black text-yellow-600 mb-2">¡GENIAL!</h1>
+                            <p className="text-xl text-slate-500 font-bold mb-8">Niveles completados: {TOTAL_LEVELS}</p>
+                            
+                            <div className="bg-rose-50 border-4 border-rose-100 rounded-3xl p-6 mb-10">
+                                <span className="block text-rose-400 text-xs font-black uppercase tracking-widest mb-2">Total de Errores</span>
+                                <span className="text-6xl font-black text-rose-600">{errors}</span>
                             </div>
+
                             <button 
                                 onClick={() => window.location.reload()}
-                                className="w-full bg-orange-500 text-white font-black py-5 rounded-2xl shadow-lg active:scale-95 transition-all"
+                                className="w-full bg-yellow-500 text-white font-black py-6 rounded-3xl shadow-lg hover:bg-yellow-600 active:scale-95 transition-all text-2xl border-b-8 border-yellow-700"
                             >
                                 VOLVER A JUGAR
                             </button>
@@ -182,90 +180,97 @@
                     {!hasInteracted ? (
                         <button 
                             onClick={handleStartGame}
-                            className="bg-white p-10 rounded-[3rem] shadow-xl border-b-8 border-sky-200 flex flex-col items-center gap-4 group"
+                            className="bg-white p-12 rounded-[4rem] shadow-2xl border-b-[12px] border-blue-200 flex flex-col items-center gap-6 group hover:translate-y-[-6px] transition-all"
                         >
-                            <div className="w-24 h-24 bg-sky-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <Icon name="volume2" size={48} className="text-sky-500" />
+                            <div className="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Icon name="volume2" size={64} className="text-blue-500" />
                             </div>
-                            <span className="text-2xl font-black text-sky-700 uppercase tracking-tighter">Tocar para empezar</span>
+                            <span className="text-4xl font-black text-blue-700 uppercase tracking-tight">¡EMPEZAR!</span>
                         </button>
                     ) : (
-                        <div className="w-full max-w-md bg-white rounded-[3rem] shadow-2xl overflow-hidden border-b-8 border-slate-200">
-                            <div className="bg-sky-500 p-6 text-white flex justify-between items-center">
-                                <div className="flex flex-col">
-                                    <span className="font-bold uppercase tracking-widest text-[10px] opacity-80 text-white/90">Progreso</span>
-                                    <span className="font-black text-lg">Nivel {level} / {TOTAL_LEVELS}</span>
+                        <div className="w-full max-w-md bg-white rounded-[3.5rem] shadow-2xl overflow-hidden border-b-[12px] border-slate-200">
+                            {/* Header con información de nivel y errores corregidos */}
+                            <div className="bg-blue-600 p-8 text-white flex justify-between items-center">
+                                <div>
+                                    <span className="block text-[10px] font-black uppercase tracking-widest opacity-70">PROGRESO</span>
+                                    <span className="text-3xl font-black">{level}<span className="text-lg opacity-50">/{TOTAL_LEVELS}</span></span>
                                 </div>
                                 
-                                <div className="bg-white/20 rounded-2xl px-4 py-2 flex items-center gap-3">
-                                    <div className="flex flex-col items-end border-r border-white/20 pr-3">
-                                        <span className="text-[10px] font-bold opacity-80 uppercase leading-none mb-1">Errores</span>
-                                        <span className="text-xl font-black leading-none">{errors}</span>
+                                <div className="flex gap-3">
+                                    <div className="bg-rose-500 rounded-2xl px-5 py-2 text-center border-b-4 border-rose-700 shadow-lg">
+                                        <span className="block text-[10px] font-black uppercase tracking-widest leading-none mb-1">ERRORES</span>
+                                        <span className="text-2xl font-black leading-none">{errors}</span>
                                     </div>
-                                    <button onClick={() => speak(`El número es el ${currentNumber}`)} className="p-1 hover:scale-110 transition-transform active:scale-90">
+                                    <button 
+                                        onClick={() => speak(`El número es el ${currentNumber}`)} 
+                                        className="bg-white/20 rounded-2xl p-4 hover:bg-white/30 active:scale-90 transition-all border border-white/20"
+                                    >
                                         <Icon name="volume2" size={28} />
                                     </button>
                                 </div>
                             </div>
 
                             <div className="p-8 text-center">
+                                {/* Número central */}
                                 <div className="mb-8 relative inline-block">
-                                    <div className="w-36 h-36 bg-amber-50 rounded-[2.5rem] border-4 border-amber-300 flex items-center justify-center shadow-inner">
-                                        <span className="text-7xl font-black text-amber-600">{currentNumber}</span>
+                                    <div className="w-44 h-44 bg-slate-50 rounded-[3.5rem] border-[6px] border-slate-100 flex items-center justify-center shadow-inner">
+                                        <span className="text-9xl font-black text-slate-700 tracking-tighter">{currentNumber}</span>
                                     </div>
-                                    <div className="absolute -top-3 -right-3 bg-white shadow-md rounded-full p-2">
-                                        <Icon name="star" size={24} className="text-yellow-400" />
+                                    <div className="absolute -top-4 -right-4 bg-yellow-400 shadow-xl rounded-full p-3 border-4 border-white animate-pulse">
+                                        <Icon name="star" size={32} className="text-white fill-white" />
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-6 mb-8">
-                                    <div className="space-y-3">
-                                        <label className="text-red-500 font-black text-lg uppercase">Decenas</label>
+                                {/* Inputs con colores corregidos: Decenas AZUL, Unidades ROJO */}
+                                <div className="grid grid-cols-2 gap-8 mb-8">
+                                    <div className="space-y-4">
+                                        <label className="text-blue-600 font-black text-sm uppercase tracking-widest">Decenas</label>
                                         <input 
                                             type="number"
                                             inputMode="numeric"
                                             value={tens}
                                             onChange={(e) => setTens(e.target.value)}
-                                            className="w-full text-5xl font-black text-center py-5 rounded-3xl border-4 border-red-100 bg-red-50 text-red-600 focus:border-red-400 focus:outline-none transition-all"
-                                            placeholder="0"
+                                            className="w-full text-6xl font-black text-center py-7 rounded-[2rem] border-4 border-blue-100 bg-blue-50 text-blue-600 focus:border-blue-400 focus:ring-0 focus:outline-none transition-all shadow-sm"
+                                            placeholder="?"
                                         />
                                     </div>
-                                    <div className="space-y-3">
-                                        <label className="text-blue-500 font-black text-lg uppercase">Unidades</label>
+                                    <div className="space-y-4">
+                                        <label className="text-rose-600 font-black text-sm uppercase tracking-widest">Unidades</label>
                                         <input 
                                             type="number"
                                             inputMode="numeric"
                                             value={units}
                                             onChange={(e) => setUnits(e.target.value)}
-                                            className="w-full text-5xl font-black text-center py-5 rounded-3xl border-4 border-blue-100 bg-blue-50 text-blue-600 focus:border-blue-400 focus:outline-none transition-all"
-                                            placeholder="0"
+                                            className="w-full text-6xl font-black text-center py-7 rounded-[2rem] border-4 border-rose-100 bg-rose-50 text-rose-600 focus:border-rose-400 focus:ring-0 focus:outline-none transition-all shadow-sm"
+                                            placeholder="?"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="h-10 mb-6 flex items-center justify-center">
+                                {/* Feedback visual */}
+                                <div className="h-16 mb-4 flex items-center justify-center">
                                     {status === 'correct' && (
-                                        <div className="flex items-center gap-2 text-green-500 font-black text-xl animate-bounce">
-                                            <Icon name="check" className="bg-green-100 rounded-full p-1" /> ¡EXCELENTE!
+                                        <div className="flex items-center gap-3 text-green-500 font-black text-2xl animate-bounce">
+                                            <Icon name="check" size={32} className="bg-green-100 rounded-full p-1" /> ¡GENIAL!
                                         </div>
                                     )}
                                     {status === 'wrong' && (
-                                        <div className="flex items-center gap-2 text-red-500 font-black text-xl animate-shake">
-                                            <Icon name="xCircle" className="bg-red-100 rounded-full p-1" /> ¡INTÉNTALO OTRA VEZ!
+                                        <div className="flex items-center gap-3 text-rose-500 font-black text-2xl animate-shake">
+                                            <Icon name="xCircle" size={32} className="bg-rose-100 rounded-full p-1" /> ¡ERROR!
                                         </div>
                                     )}
                                 </div>
 
                                 <button 
                                     onClick={checkAnswer}
-                                    disabled={!tens || !units || status === 'correct'}
-                                    className={`w-full py-6 rounded-3xl text-2xl font-black shadow-lg transition-all active:scale-95 ${
-                                        !tens || !units || status === 'correct' 
-                                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
-                                        : 'bg-green-500 text-white hover:bg-green-600 border-b-4 border-green-700'
+                                    disabled={tens === '' || units === '' || status === 'correct'}
+                                    className={`w-full py-7 rounded-[2.5rem] text-3xl font-black shadow-xl transition-all active:scale-95 ${
+                                        tens === '' || units === '' || status === 'correct' 
+                                        ? 'bg-slate-100 text-slate-300 cursor-not-allowed' 
+                                        : 'bg-green-500 text-white hover:bg-green-600 border-b-[10px] border-green-700'
                                     }`}
                                 >
-                                    ¡COMPROBAR!
+                                    ¡LISTO!
                                 </button>
                             </div>
                         </div>
