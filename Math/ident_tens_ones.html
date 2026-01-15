@@ -28,19 +28,24 @@
     <script type="text/babel">
         const { useState, useEffect, useCallback } = React;
 
-        // Componente de Icono usando SVG puro corregido con Fragmentos de React
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
                 trophy: <path d="M6 9H4a2 2 0 0 1 0-4h2m12 4h2a2 2 0 0 0 0-4h-2M6 5c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5zm3 17h6m-3-5v5" />,
                 volume2: <path d="M11 5L6 9H2v6h4l5 4V5zm4.54 3.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" />,
                 star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />,
                 check: <polyline points="20 6 9 17 4 12" />,
-                // Se envuelven los elementos adyacentes en un fragmento <> </>
                 alert: (
                     <React.Fragment>
                         <circle cx="12" cy="12" r="10" />
                         <line x1="12" y1="8" x2="12" y2="12" />
                         <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </React.Fragment>
+                ),
+                xCircle: (
+                    <React.Fragment>
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="15" y1="9" x2="9" y2="15" />
+                        <line x1="9" y1="9" x2="15" y2="15" />
                     </React.Fragment>
                 )
             };
@@ -57,7 +62,7 @@
                     strokeLinejoin="round" 
                     className={className}
                 >
-                    {icons[name.toLowerCase()] || null}
+                    {icons[name.toLowerCase()] || icons[name] || null}
                 </svg>
             );
         };
@@ -68,6 +73,7 @@
             const [units, setUnits] = useState('');
             const [level, setLevel] = useState(1);
             const [score, setScore] = useState(0);
+            const [errors, setErrors] = useState(0); // Nuevo estado para errores
             const [status, setStatus] = useState('idle');
             const [selectedVoice, setSelectedVoice] = useState(null);
             const [hasInteracted, setHasInteracted] = useState(false);
@@ -144,6 +150,7 @@
                     }, 2500);
                 } else {
                     setStatus('wrong');
+                    setErrors(e => e + 1); // Incrementar contador de errores
                     speak("Esa no es la respuesta correcta. Inténtalo de nuevo.");
                     setTimeout(() => setStatus('idle'), 1500);
                 }
@@ -155,10 +162,13 @@
                         <div className="bg-white rounded-[3rem] shadow-2xl p-10 max-w-sm w-full text-center border-b-8 border-orange-200">
                             <Icon name="trophy" size={80} className="text-yellow-400 mx-auto mb-4" />
                             <h1 className="text-4xl font-black text-orange-600 mb-2">¡GENIAL!</h1>
-                            <p className="text-xl text-slate-600 font-bold mb-8">Completaste los {TOTAL_LEVELS} niveles.</p>
+                            <p className="text-xl text-slate-600 font-bold mb-4">Completaste los {TOTAL_LEVELS} niveles.</p>
+                            <div className="bg-red-50 text-red-600 rounded-2xl py-3 px-6 mb-8 inline-block font-black border-2 border-red-100">
+                                ERRORES TOTALES: {errors}
+                            </div>
                             <button 
                                 onClick={() => window.location.reload()}
-                                className="w-full bg-orange-500 text-white font-black py-5 rounded-2xl shadow-lg active:scale-95"
+                                className="w-full bg-orange-500 text-white font-black py-5 rounded-2xl shadow-lg active:scale-95 transition-all"
                             >
                                 VOLVER A JUGAR
                             </button>
@@ -182,10 +192,20 @@
                     ) : (
                         <div className="w-full max-w-md bg-white rounded-[3rem] shadow-2xl overflow-hidden border-b-8 border-slate-200">
                             <div className="bg-sky-500 p-6 text-white flex justify-between items-center">
-                                <span className="font-bold uppercase tracking-widest text-sm">Nivel {level} / {TOTAL_LEVELS}</span>
-                                <button onClick={() => speak(`El número es el ${currentNumber}`)} className="p-2 bg-white/20 rounded-full active:bg-white/40">
-                                    <Icon name="volume2" size={24} />
-                                </button>
+                                <div className="flex flex-col">
+                                    <span className="font-bold uppercase tracking-widest text-[10px] opacity-80 text-white/90">Progreso</span>
+                                    <span className="font-black text-lg">Nivel {level} / {TOTAL_LEVELS}</span>
+                                </div>
+                                
+                                <div className="bg-white/20 rounded-2xl px-4 py-2 flex items-center gap-3">
+                                    <div className="flex flex-col items-end border-r border-white/20 pr-3">
+                                        <span className="text-[10px] font-bold opacity-80 uppercase leading-none mb-1">Errores</span>
+                                        <span className="text-xl font-black leading-none">{errors}</span>
+                                    </div>
+                                    <button onClick={() => speak(`El número es el ${currentNumber}`)} className="p-1 hover:scale-110 transition-transform active:scale-90">
+                                        <Icon name="volume2" size={28} />
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="p-8 text-center">
@@ -206,7 +226,7 @@
                                             inputMode="numeric"
                                             value={tens}
                                             onChange={(e) => setTens(e.target.value)}
-                                            className="w-full text-5xl font-black text-center py-5 rounded-3xl border-4 border-red-100 bg-red-50 text-red-600 focus:border-red-400 focus:outline-none"
+                                            className="w-full text-5xl font-black text-center py-5 rounded-3xl border-4 border-red-100 bg-red-50 text-red-600 focus:border-red-400 focus:outline-none transition-all"
                                             placeholder="0"
                                         />
                                     </div>
@@ -217,7 +237,7 @@
                                             inputMode="numeric"
                                             value={units}
                                             onChange={(e) => setUnits(e.target.value)}
-                                            className="w-full text-5xl font-black text-center py-5 rounded-3xl border-4 border-blue-100 bg-blue-50 text-blue-600 focus:border-blue-400 focus:outline-none"
+                                            className="w-full text-5xl font-black text-center py-5 rounded-3xl border-4 border-blue-100 bg-blue-50 text-blue-600 focus:border-blue-400 focus:outline-none transition-all"
                                             placeholder="0"
                                         />
                                     </div>
@@ -225,22 +245,24 @@
 
                                 <div className="h-10 mb-6 flex items-center justify-center">
                                     {status === 'correct' && (
-                                        <div className="flex items-center gap-2 text-green-500 font-bold">
-                                            <Icon name="check" className="bg-green-100 rounded-full p-1" /> ¡Excelente!
+                                        <div className="flex items-center gap-2 text-green-500 font-black text-xl animate-bounce">
+                                            <Icon name="check" className="bg-green-100 rounded-full p-1" /> ¡EXCELENTE!
                                         </div>
                                     )}
                                     {status === 'wrong' && (
-                                        <div className="flex items-center gap-2 text-red-500 font-bold animate-shake">
-                                            <Icon name="alert" className="bg-red-100 rounded-full p-1" /> Inténtalo de nuevo
+                                        <div className="flex items-center gap-2 text-red-500 font-black text-xl animate-shake">
+                                            <Icon name="xCircle" className="bg-red-100 rounded-full p-1" /> ¡INTÉNTALO OTRA VEZ!
                                         </div>
                                     )}
                                 </div>
 
                                 <button 
                                     onClick={checkAnswer}
-                                    disabled={!tens || !units}
+                                    disabled={!tens || !units || status === 'correct'}
                                     className={`w-full py-6 rounded-3xl text-2xl font-black shadow-lg transition-all active:scale-95 ${
-                                        !tens || !units ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600'
+                                        !tens || !units || status === 'correct' 
+                                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                                        : 'bg-green-500 text-white hover:bg-green-600 border-b-4 border-green-700'
                                     }`}
                                 >
                                     ¡COMPROBAR!
