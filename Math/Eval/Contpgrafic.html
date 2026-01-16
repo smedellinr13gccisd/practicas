@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafío de Conteo: 22 Niveles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fruit-box {
+            background-color: #fef3c7;
+            border: 5px solid #d97706;
+            border-radius: 18px;
+            padding: 14px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+            gap: 7px;
+            min-height: 138px;
+            box-shadow: inset 0 2px 9px rgba(0,0,0,0.1);
+        }
+        .fruit-item {
+            font-size: 2.3rem;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .input-field {
+            border: 2px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+        
+        .input-correct { 
+            border-color: #10b981 !important; 
+            background-color: #ecfdf5 !important; 
+            color: #065f46 !important;
+        }
+        .input-wrong { 
+            border-color: #ef4444 !important; 
+            background-color: #fef2f2 !important; 
+            color: #991b1b !important;
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 0 5px 7px -1px rgba(0,0,0,0.05);
+            border: 1px solid #f1f5f9;
+        }
+
+        .stats-badge {
+            background: #fff;
+            padding: 3px 12px;
+            border-radius: 9px;
+            font-weight: 800;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-next {
+            display: none;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+    </style>
+</head>
+<body class="bg-amber-50 min-h-screen py-4 px-2">
+
+    <div class="max-w-lg mx-auto">
+        <!-- Encabezado con Progreso -->
+        <header class="flex justify-between items-center mb-4 bg-white p-4 rounded-xl shadow-sm border border-amber-100">
+            <div class="flex flex-col">
+                <span class="text-[11px] font-bold text-amber-600 uppercase">Progreso</span>
+                <span class="text-base font-black text-amber-900">Nivel <span id="level-display">1</span> de 22</span>
+            </div>
+            <div class="flex gap-2">
+                <div class="flex flex-col items-center">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase">Errores</span>
+                    <span id="error-display" class="stats-badge text-red-600 text-base">0</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="space-y-4">
+            <!-- Área de la Caja -->
+            <section class="card">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Contenido de la Caja</h2>
+                    <span id="level-title" class="text-[11px] bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-bold">Básico</span>
+                </div>
+                <div id="fruit-display" class="fruit-box">
+                    <!-- Frutas dinámicas -->
+                </div>
+            </section>
+
+            <!-- Área de Respuestas -->
+            <section class="card">
+                <h2 class="text-sm font-bold mb-4 text-slate-500 uppercase tracking-widest">¿Cuántas frutas hay?</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="flex flex-col items-center">
+                        <span class="text-3xl mb-1">🍎</span>
+                        <input type="number" id="count-apple" min="0" max="18" class="input-field w-full p-3 text-center rounded-lg text-xl font-black focus:outline-none" placeholder="0">
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-3xl mb-1">🍌</span>
+                        <input type="number" id="count-banana" min="0" max="18" class="input-field w-full p-3 text-center rounded-lg text-xl font-black focus:outline-none" placeholder="0">
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-3xl mb-1">🍇</span>
+                        <input type="number" id="count-grape" min="0" max="18" class="input-field w-full p-3 text-center rounded-lg text-xl font-black focus:outline-none" placeholder="0">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Botones de Acción -->
+            <div class="space-y-3">
+                <button id="btn-verify" onclick="verifyAll()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xl font-black py-4 rounded-xl shadow-md transition-all active:scale-95 w-full">
+                    ✅ REVISAR
+                </button>
+                
+                <button id="btn-next" onclick="nextLevel()" class="btn-next bg-emerald-500 hover:bg-emerald-600 text-white text-xl font-black py-4 rounded-xl shadow-md transition-all active:scale-95 w-full">
+                    ¡Siguiente Nivel! ➡️
+                </button>
+            </div>
+
+            <!-- Mensaje Final -->
+            <div id="final-card" class="hidden card bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-center py-10">
+                <h2 class="text-4xl font-black mb-3">¡LO LOGRASTE! 🎉</h2>
+                <p class="mb-5 text-lg">Completaste los 22 niveles.</p>
+                <div class="text-2xl font-bold bg-white/20 p-4 rounded-xl inline-block">
+                    Errores totales: <span id="final-errors">0</span>
+                </div>
+                <button onclick="resetGame()" class="block mx-auto mt-8 bg-white text-indigo-600 px-8 py-3 rounded-full font-bold text-lg">Jugar de nuevo</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const fruitsData = [
+            { id: 'apple', emoji: '🍎', count: 0 },
+            { id: 'banana', emoji: '🍌', count: 0 },
+            { id: 'grape', emoji: '🍇', count: 0 }
+        ];
+
+        let currentLevel = 1;
+        let totalErrors = 0;
+        const totalLevels = 22;
+
+        function generateFruits() {
+            const container = document.getElementById('fruit-display');
+            container.innerHTML = '';
+            
+            // Dificultad incremental: niveles más altos tienen más frutas (pero siempre max 9 de cada una)
+            const minFruta = currentLevel < 10 ? 1 : 3;
+            
+            fruitsData.forEach(f => {
+                f.count = Math.floor(Math.random() * 9) + minFruta;
+                const input = document.getElementById(`count-${f.id}`);
+                input.value = '';
+                input.classList.remove('input-correct', 'input-wrong');
+                input.disabled = false;
+            });
+
+            const allFruits = [];
+            fruitsData.forEach(f => {
+                for(let i=0; i < f.count; i++) allFruits.push(f.emoji);
+            });
+
+            // Mezclar
+            for (let i = allFruits.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allFruits[i], allFruits[j]] = [allFruits[j], allFruits[i]];
+            }
+
+            allFruits.forEach(emoji => {
+                const span = document.createElement('span');
+                span.className = 'fruit-item';
+                span.innerText = emoji;
+                container.appendChild(span);
+            });
+
+            // Reset UI
+            document.getElementById('btn-verify').style.display = 'block';
+            document.getElementById('btn-next').style.display = 'none';
+            document.getElementById('level-display').innerText = currentLevel;
+            
+            // Títulos de dificultad
+            const title = document.getElementById('level-title');
+            if (currentLevel < 8) title.innerText = "FÁCIL";
+            else if (currentLevel < 16) title.innerText = "MEDIO";
+            else title.innerText = "AVANZADO";
+        }
+
+        function verifyAll() {
+            let errorsInTurn = 0;
+            let allCorrect = true;
+            
+            fruitsData.forEach(f => {
+                const input = document.getElementById(`count-${f.id}`);
+                const userVal = parseInt(input.value);
+                
+                if (userVal === f.count) {
+                    input.classList.add('input-correct');
+                    input.classList.remove('input-wrong');
+                } else {
+                    input.classList.add('input-wrong');
+                    input.classList.remove('input-correct');
+                    errorsInTurn++;
+                    allCorrect = false;
+                }
+            });
+
+            if (errorsInTurn > 0) {
+                totalErrors += errorsInTurn;
+                document.getElementById('error-display').innerText = totalErrors;
+            }
+
+            if (allCorrect) {
+                document.getElementById('btn-verify').style.display = 'none';
+                document.getElementById('btn-next').style.display = 'block';
+                fruitsData.forEach(f => document.getElementById(`count-${f.id}`).disabled = true);
+            }
+        }
+
+        function nextLevel() {
+            if (currentLevel < totalLevels) {
+                currentLevel++;
+                generateFruits();
+            } else {
+                showFinal();
+            }
+        }
+
+        function showFinal() {
+            document.querySelector('header').classList.add('hidden');
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById('btn-next').style.display = 'none';
+            document.getElementById('final-card').classList.remove('hidden');
+            document.getElementById('final-errors').innerText = totalErrors;
+        }
+
+        function resetGame() {
+            currentLevel = 1;
+            totalErrors = 0;
+            document.getElementById('error-display').innerText = "0";
+            document.querySelector('header').classList.remove('hidden');
+            document.querySelectorAll('section').forEach(s => s.classList.remove('hidden'));
+            document.getElementById('final-card').classList.add('hidden');
+            generateFruits();
+        }
+
+        window.onload = generateFruits;
+    </script>
+</body>
+</html>
