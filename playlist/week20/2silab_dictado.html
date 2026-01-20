@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dictado Mágico: 100 Palabras</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #fff7ed; /* Naranja muy suave */
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 30px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            border: 4px solid #fbbf24;
+            max-width: 600px; 
+            width: 95%;
+            text-align: center;
+        }
+
+        .btn-speaker {
+            background-color: #fef3c7;
+            border: 4px solid #fbbf24;
+            border-radius: 50%;
+            width: 130px;
+            height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 8px 0 #d97706;
+            margin: 0 auto 1.5rem;
+        }
+
+        .btn-speaker:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #d97706;
+        }
+
+        .btn-speaker:hover {
+            background-color: #fde68a;
+        }
+
+        /* Caja de texto MUCHO más alta */
+        input {
+            border: 5px solid #cbd5e1;
+            border-radius: 30px;
+            padding: 2.5rem 1.5rem; 
+            outline: none;
+            font-weight: 700;
+            font-size: 3.5rem; 
+            text-align: center;
+            width: 100%;
+            transition: all 0.3s;
+            margin-top: 15px;
+            line-height: 1;
+        }
+
+        .input-correct {
+            border-color: #22c55e !important;
+            background-color: #f0fdf4 !important;
+            color: #15803d !important;
+            animation: bounce 0.5s;
+        }
+
+        .input-incorrect {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2 !important;
+            color: #b91c1c !important;
+            animation: shake 0.3s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-15px); }
+            75% { transform: translateX(15px); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        .progress-bar {
+            height: 20px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            width: 100%;
+            margin-top: 1.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #22c55e;
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        .instruction-badge {
+            background-color: #f8fafc;
+            border: 2px dashed #94a3b8;
+            padding: 10px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            color: #475569;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .instruction-badge:active {
+            background-color: #f1f5f9;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mt-10 mb-6 text-center">
+        <h1 class="text-4xl font-bold text-orange-600 mb-2">🎧 Dictado de Sílabas</h1>
+        <p class="text-lg text-orange-800 font-bold">¡Escucha y escribe la palabra correcta! ✨</p>
+    </div>
+
+    <div class="game-card">
+        <div class="flex justify-between mb-4">
+            <span class="bg-blue-100 text-blue-700 px-4 py-1 rounded-full font-bold">Palabra: <span id="current-word-num">1</span>/100</span>
+            <span class="bg-red-100 text-red-700 px-4 py-1 rounded-full font-bold">Errores: <span id="error-count">0</span> ❌</span>
+        </div>
+
+        <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill"></div>
+        </div>
+
+        <div class="mt-8">
+            <!-- Instrucción con emoji de persona hablando y función de voz -->
+            <div class="instruction-badge" onclick="reproducirInstrucciones()">
+                <span class="text-2xl mr-2">🗣️</span> <span id="txt-instruccion">Oprime la bocina y luego escribe la palabra en la caja gris</span>
+            </div>
+
+            <button class="btn-speaker" onclick="reproducirPalabra()" id="speaker-btn">
+                <span class="text-7xl">📢</span>
+            </button>
+            
+            <div id="status-msg" class="h-10 mb-2 font-bold text-2xl"></div>
+            
+            <input type="text" id="word-input" placeholder="???" autocomplete="off" oninput="validarEscritura()">
+            
+            <div class="mt-8">
+                <p id="hint" class="text-slate-400 italic text-base">¡Toca la bocina para empezar!</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="final-screen" class="hidden fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 text-center">
+        <h2 class="text-6xl mb-4 font-bold text-green-600">🏆 ¡Felicidades!</h2>
+        <p class="text-3xl mb-8">Completaste las 100 palabras.</p>
+        <div class="bg-orange-100 p-10 rounded-3xl shadow-xl">
+            <p class="text-4xl font-bold text-orange-600">Total de errores: <span id="final-errors">0</span></p>
+        </div>
+        <button onclick="location.reload()" class="mt-12 bg-green-500 text-white px-10 py-5 rounded-full text-3xl font-bold shadow-lg hover:bg-green-600 transition">¡Jugar de nuevo! 🔄</button>
+    </div>
+
+    <audio id="sound-success" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+
+    <script>
+        const palabras = [
+            "casa", "perro", "gato", "mesa", "silla", "pato", "lobo", "nena", "foca", "rana",
+            "brazo", "trigo", "plato", "fruta", "globo", "crema", "blusa", "fresa", "grillo", "truco",
+            "libro", "cable", "sobre", "coche", "pelo", "mano", "boca", "dedo", "piña", "lupa",
+            "clavo", "flama", "bravo", "prado", "trucha", "clase", "flota", "freno", "gruta", "pluma",
+            "leche", "taza", "vaca", "nube", "rosa", "lago", "moto", "bota", "pala", "cubo",
+            "brisa", "trenza", "preso", "flecha", "bloque", "clima", "frasco", "dragón", "placa", "grasa",
+            "nudo", "piso", "foto", "pila", "pera", "pié", "tapa", "sopa", "vela", "luz",
+            "broca", "traje", "presa", "flaco", "cloro", "bruto", "trato", "frito", "cromo", "playa",
+            "niño", "loro", "jugo", "cuna", "luna", "rayo", "llave", "mapa", "piña", "bolsa",
+            "blanco", "prenda", "trueno", "fruta", "claro", "broma", "plomo", "fresa", "gratis", "clavo"
+        ];
+
+        let currentIndex = 0;
+        let errors = 0;
+        let vocesDisponibles = [];
+
+        function cargarVoces() {
+            vocesDisponibles = window.speechSynthesis.getVoices();
+        }
+
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = cargarVoces;
+        }
+
+        // Función para leer las instrucciones
+        function reproducirInstrucciones() {
+            window.speechSynthesis.cancel();
+            const texto = document.getElementById('txt-instruccion').innerText;
+            const mensaje = new SpeechSynthesisUtterance(texto);
+            configurarVoz(mensaje);
+            window.speechSynthesis.speak(mensaje);
+        }
+
+        function configurarVoz(mensaje) {
+            mensaje.lang = 'es-MX';
+            mensaje.rate = 0.85; 
+            mensaje.pitch = 1.2;  
+
+            const vozPreferida = vocesDisponibles.find(v => 
+                (v.lang.includes('es')) && 
+                (v.name.includes('Sofia') || v.name.includes('Sandra') || v.name.includes('Niña') || v.name.includes('Femenina') || v.name.includes('Monica') || v.name.includes('Paulina'))
+            );
+
+            if (vozPreferida) {
+                mensaje.voice = vozPreferida;
+            }
+        }
+
+        function reproducirPalabra() {
+            window.speechSynthesis.cancel();
+            const mensaje = new SpeechSynthesisUtterance(palabras[currentIndex]);
+            configurarVoz(mensaje);
+            window.speechSynthesis.speak(mensaje);
+        }
+
+        function validarEscritura() {
+            const input = document.getElementById('word-input');
+            const valor = input.value.trim().toLowerCase();
+            const palabraCorrecta = palabras[currentIndex].toLowerCase();
+            const statusMsg = document.getElementById('status-msg');
+
+            if (valor.length >= palabraCorrecta.length) {
+                if (valor === palabraCorrecta) {
+                    marcarCorrecto();
+                } else {
+                    marcarIncorrecto();
+                }
+            } else {
+                input.classList.remove('input-incorrect');
+                statusMsg.innerHTML = "";
+            }
+        }
+
+        function marcarCorrecto() {
+            const input = document.getElementById('word-input');
+            const statusMsg = document.getElementById('status-msg');
+            const successSound = document.getElementById('sound-success');
+
+            input.classList.add('input-correct');
+            statusMsg.innerHTML = "<span class='text-green-600'>✨ ¡Excelente! ✨</span>";
+            
+            try { successSound.play(); } catch(e) {}
+
+            setTimeout(() => {
+                currentIndex++;
+                if (currentIndex < palabras.length) {
+                    actualizarUI();
+                } else {
+                    mostrarPantallaFinal();
+                }
+            }, 1200);
+        }
+
+        function marcarIncorrecto() {
+            const input = document.getElementById('word-input');
+            const statusMsg = document.getElementById('status-msg');
+            
+            if (!input.classList.contains('input-incorrect')) {
+                errors++;
+                document.getElementById('error-count').innerText = errors;
+                input.classList.add('input-incorrect');
+                statusMsg.innerHTML = "<span class='text-red-500'>Vuelve a intentar ❌</span>";
+                
+                if (navigator.vibrate) navigator.vibrate(200);
+            }
+        }
+
+        function actualizarUI() {
+            const input = document.getElementById('word-input');
+            input.value = "";
+            input.classList.remove('input-correct', 'input-incorrect');
+            document.getElementById('status-msg').innerHTML = "";
+            document.getElementById('current-word-num').innerText = currentIndex + 1;
+            
+            const progreso = (currentIndex / palabras.length) * 100;
+            document.getElementById('progress-fill').style.width = progreso + "%";
+            
+            document.getElementById('hint').innerText = "¡Nueva palabra lista! Oprime la bocina.";
+            
+            const btn = document.getElementById('speaker-btn');
+            btn.classList.add('scale-110');
+            setTimeout(() => btn.classList.remove('scale-110'), 200);
+        }
+
+        function mostrarPantallaFinal() {
+            document.getElementById('final-errors').innerText = errors;
+            document.getElementById('final-screen').classList.remove('hidden');
+        }
+
+        window.onload = () => {
+            cargarVoces();
+            actualizarUI();
+        };
+    </script>
+</body>
+</html>
