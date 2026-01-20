@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Reloj Mágico ⏰✨</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Quicksand', sans-serif; touch-action: manipulation; }
+        .clock-face {
+            border: 12px solid #4F46E5;
+            box-shadow: 0 10px 0 #3730A3, inset 0 0 20px rgba(0,0,0,0.1);
+        }
+        .hand { transform-origin: bottom center; transition: transform 0.5s cubic-bezier(0.4, 2.08, 0.55, 0.44); }
+        .option-btn { transition: all 0.2s; box-shadow: 0 6px 0 rgba(0,0,0,0.1); }
+        .option-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.1); }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .error-shake { animation: shake 0.3s ease-in-out; }
+
+        /* Estilo para los números del reloj */
+        .number {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #1e293b;
+            padding: 10px;
+        }
+        /* Rotación individual para posicionar cada número */
+        .n1 { transform: rotate(30deg); } .n1 span { transform: rotate(-30deg); display: block; }
+        .n2 { transform: rotate(60deg); } .n2 span { transform: rotate(-60deg); display: block; }
+        .n3 { transform: rotate(90deg); } .n3 span { transform: rotate(-90deg); display: block; }
+        .n4 { transform: rotate(120deg); } .n4 span { transform: rotate(-120deg); display: block; }
+        .n5 { transform: rotate(150deg); } .n5 span { transform: rotate(-150deg); display: block; }
+        .n6 { transform: rotate(180deg); } .n6 span { transform: rotate(-180deg); display: block; }
+        .n7 { transform: rotate(210deg); } .n7 span { transform: rotate(-210deg); display: block; }
+        .n8 { transform: rotate(240deg); } .n8 span { transform: rotate(-240deg); display: block; }
+        .n9 { transform: rotate(270deg); } .n9 span { transform: rotate(-270deg); display: block; }
+        .n10 { transform: rotate(300deg); } .n10 span { transform: rotate(-300deg); display: block; }
+        .n11 { transform: rotate(330deg); } .n11 span { transform: rotate(-330deg); display: block; }
+        .n12 { transform: rotate(0deg); } .n12 span { transform: rotate(0deg); display: block; }
+    </style>
+</head>
+<body class="bg-yellow-50 min-h-screen flex flex-col items-center p-4">
+
+    <!-- Header & Stats -->
+    <div class="w-full max-w-lg flex justify-between items-center bg-white p-4 rounded-2xl shadow-md mb-6">
+        <div class="text-center">
+            <span class="block text-xs font-bold text-gray-400 uppercase">Progreso</span>
+            <span class="text-2xl" id="level-display">1/60</span>
+        </div>
+        <div class="text-center">
+            <span class="block text-xs font-bold text-gray-400 uppercase">Errores</span>
+            <span class="text-2xl text-red-500 font-bold" id="error-count">0</span>
+        </div>
+        <div class="text-center">
+            <span class="block text-xs font-bold text-gray-400 uppercase">Idioma</span>
+            <span id="lang-emoji" class="text-2xl">🇲🇽</span>
+        </div>
+    </div>
+
+    <!-- Main Game Card -->
+    <div id="game-container" class="w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6 relative overflow-hidden">
+        
+        <div class="text-center mb-6">
+            <button id="speak-btn" class="bg-indigo-100 hover:bg-indigo-200 p-4 rounded-full transition-colors mb-2">
+                <span class="text-3xl">🔊</span>
+            </button>
+            <p id="instruction-text" class="text-lg font-bold text-indigo-700">¿Qué hora es en el reloj?</p>
+        </div>
+
+        <!-- Analog Clock Container -->
+        <div class="flex justify-center mb-8">
+            <div class="clock-face w-72 h-72 rounded-full bg-white relative flex items-center justify-center">
+                <!-- Números completos del 1 al 12 -->
+                <div class="absolute inset-0">
+                    <div class="number n12"><span>12</span></div>
+                    <div class="number n1"><span>1</span></div>
+                    <div class="number n2"><span>2</span></div>
+                    <div class="number n3"><span>3</span></div>
+                    <div class="number n4"><span>4</span></div>
+                    <div class="number n5"><span>5</span></div>
+                    <div class="number n6"><span>6</span></div>
+                    <div class="number n7"><span>7</span></div>
+                    <div class="number n8"><span>8</span></div>
+                    <div class="number n9"><span>9</span></div>
+                    <div class="number n10"><span>10</span></div>
+                    <div class="number n11"><span>11</span></div>
+                </div>
+                
+                <!-- Hands -->
+                <div id="hour-hand" class="hand absolute w-2.5 h-16 bg-gray-800 rounded-full" style="bottom: 50%; z-index: 5;"></div>
+                <div id="minute-hand" class="hand absolute w-1.5 h-28 bg-red-500 rounded-full" style="bottom: 50%; z-index: 4;"></div>
+                <!-- Center Dot -->
+                <div class="absolute w-5 h-5 bg-gray-800 rounded-full z-10 shadow-md"></div>
+            </div>
+        </div>
+
+        <!-- Options Grid -->
+        <div class="grid grid-cols-2 gap-4" id="options-container">
+            <!-- Dynamically filled -->
+        </div>
+
+    </div>
+
+    <!-- Canvas for Fireworks -->
+    <canvas id="fireworks-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <script>
+        const state = {
+            currentLevel: 1,
+            totalLevels: 60,
+            errors: 0,
+            currentHour: 0,
+            currentMinute: 0,
+            language: 'es', 
+            voices: []
+        };
+
+        let els = {};
+
+        function initElements() {
+            els = {
+                level: document.getElementById('level-display'),
+                errors: document.getElementById('error-count'),
+                langEmoji: document.getElementById('lang-emoji'),
+                instruction: document.getElementById('instruction-text'),
+                hourHand: document.getElementById('hour-hand'),
+                minuteHand: document.getElementById('minute-hand'),
+                options: document.getElementById('options-container'),
+                gameCard: document.getElementById('game-container'),
+                speakBtn: document.getElementById('speak-btn'),
+                fwCanvas: document.getElementById('fireworks-canvas')
+            };
+        }
+
+        // --- AUDIO ENGINE ---
+        function loadVoices() {
+            state.voices = window.speechSynthesis.getVoices();
+        }
+        
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+            loadVoices();
+        }
+
+        function speak(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = state.language === 'es' ? 'es-MX' : 'en-US';
+            utterance.rate = 0.9;
+            utterance.pitch = 1.2;
+
+            const preferredVoice = state.voices.find(v => {
+                const name = v.name.toLowerCase();
+                const langMatch = v.lang.startsWith(state.language);
+                return langMatch && (name.includes('sofía') || name.includes('sandra') || name.includes('girl') || name.includes('female'));
+            });
+
+            if (preferredVoice) utterance.voice = preferredVoice;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function playSound(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const frequencies = type === 'success' ? [523.25, 659.25, 783.99] : [150, 100];
+                frequencies.forEach((f, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = type === 'success' ? 'sine' : 'sawtooth';
+                    osc.frequency.setValueAtTime(f, ctx.currentTime + (i * 0.1));
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.5);
+                });
+            } catch(e) { console.error("Audio error", e); }
+        }
+
+        // --- GAME LOGIC ---
+        function generateLevel() {
+            if (!els.level) initElements();
+            
+            state.language = state.currentLevel > 50 ? (state.currentLevel % 2 === 0 ? 'en' : 'es') : 'es';
+            els.langEmoji.innerText = state.language === 'es' ? '🇲🇽' : '🇺🇸';
+            
+            els.instruction.innerText = state.language === 'es' ? "¿Qué hora marca el reloj?" : "What time is it on the clock?";
+
+            state.currentHour = Math.floor(Math.random() * 12) + 1;
+            state.currentMinute = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+            
+            updateClock(state.currentHour, state.currentMinute);
+            renderOptions();
+        }
+
+        function updateClock(h, m) {
+            const hDeg = (h * 30) + (m * 0.5);
+            const mDeg = m * 6;
+            els.hourHand.style.transform = `rotate(${hDeg}deg)`;
+            els.minuteHand.style.transform = `rotate(${mDeg}deg)`;
+        }
+
+        function renderOptions() {
+            const correctTime = `${state.currentHour}:${state.currentMinute.toString().padStart(2, '0')}`;
+            let options = [correctTime];
+
+            while(options.length < 4) {
+                let h = Math.floor(Math.random() * 12) + 1;
+                let m = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+                let time = `${h}:${m.toString().padStart(2, '0')}`;
+                if(!options.includes(time)) options.push(time);
+            }
+
+            options.sort(() => Math.random() - 0.5);
+
+            els.options.innerHTML = '';
+            options.forEach(time => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn bg-white border-4 border-indigo-500 rounded-2xl py-4 text-2xl font-black text-indigo-700 hover:bg-indigo-50";
+                btn.innerText = time;
+                btn.onclick = () => checkAnswer(time, btn);
+                els.options.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected, btn) {
+            const correctTime = `${state.currentHour}:${state.currentMinute.toString().padStart(2, '0')}`;
+            if(selected === correctTime) {
+                handleSuccess(btn);
+            } else {
+                handleError(btn);
+            }
+        }
+
+        function handleSuccess(btn) {
+            btn.classList.add('bg-green-400', 'text-white', 'border-green-600');
+            playSound('success');
+            launchFireworks();
+            
+            setTimeout(() => {
+                if(state.currentLevel < state.totalLevels) {
+                    state.currentLevel++;
+                    els.level.innerText = `${state.currentLevel}/60`;
+                    generateLevel();
+                } else {
+                    alert("¡Felicidades! Completaste todos los niveles.");
+                    location.reload();
+                }
+            }, 1500);
+        }
+
+        function handleError(btn) {
+            state.errors++;
+            els.errors.innerText = state.errors;
+            btn.classList.add('bg-red-400', 'text-white', 'border-red-600', 'error-shake');
+            playSound('error');
+            
+            const msg = state.language === 'es' ? "¡Inténtalo de nuevo!" : "Try again!";
+            speak(msg);
+
+            setTimeout(() => {
+                btn.classList.remove('bg-red-400', 'text-white', 'border-red-600', 'error-shake');
+            }, 800);
+        }
+
+        // --- FIREWORKS ---
+        let particles = [];
+        function launchFireworks() {
+            els.fwCanvas.width = window.innerWidth;
+            els.fwCanvas.height = window.innerHeight;
+            for(let i=0; i<80; i++) {
+                particles.push({
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.5) * 12,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    life: 1
+                });
+            }
+            animateFw();
+        }
+
+        function animateFw() {
+            if(particles.length === 0) return;
+            const ctx = els.fwCanvas.getContext('2d');
+            ctx.clearRect(0, 0, els.fwCanvas.width, els.fwCanvas.height);
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= 0.02;
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            requestAnimationFrame(animateFw);
+        }
+
+        window.onload = () => {
+            initElements();
+            els.speakBtn.onclick = () => {
+                const h = state.currentHour;
+                const m = state.currentMinute;
+                let timeStr = "";
+                if(state.language === 'es') {
+                    timeStr = h === 1 ? `Es la una y ${m === 0 ? 'punto' : m}` : `Son las ${h} y ${m === 0 ? 'punto' : m}`;
+                } else {
+                    timeStr = `It is ${h} ${m === 0 ? 'o clock' : m}`;
+                }
+                speak(timeStr);
+            };
+            generateLevel();
+        };
+    </script>
+</body>
+</html>
