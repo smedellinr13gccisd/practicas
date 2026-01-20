@@ -38,7 +38,7 @@
         select, input {
             border: 2px solid #cbd5e1;
             border-radius: 12px;
-            padding: 0.8rem; /* Cajas más grandes */
+            padding: 0.8rem;
             outline: none;
             font-weight: 700;
             font-size: 1.1rem;
@@ -47,8 +47,28 @@
 
         .instruction-box {
             background-color: #ffffff;
-            border: 3px dashed #22c55e;
+            border: 4px dashed #22c55e;
             border-radius: 25px;
+            position: relative;
+        }
+
+        .btn-audio {
+            background-color: #dcfce7;
+            border: 2px solid #22c55e;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 0 #16a34a;
+        }
+
+        .btn-audio:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0 #16a34a;
         }
 
         .word-display {
@@ -64,21 +84,65 @@
         <header class="text-center my-8">
             <h1 class="text-5xl font-bold text-green-600 mb-4">🏷️ Los Sustantivos</h1>
             
-            <div class="instruction-box p-8 mt-6 mb-10 shadow-sm">
-                <p class="text-2xl font-bold text-green-700 mb-2">Instrucciones:</p>
-                <p class="text-xl text-slate-600">
-                    Mira la palabra en minúsculas. Elige si es <b>común</b> o <b>propio</b>. Luego, escríbela correctamente (recuerda usar <b>Mayúscula</b> si es un nombre propio).
-                </p>
+            <!-- Instrucciones con Bocina Optimizada -->
+            <div class="instruction-box p-8 mt-6 mb-10 shadow-lg flex flex-col md:flex-row items-center gap-6">
+                <div class="flex-grow text-left">
+                    <p class="text-2xl font-bold text-green-700 mb-4 flex items-center">
+                        <span class="mr-2">📝</span> Instrucciones:
+                    </p>
+                    <p id="texto-instrucciones" class="text-xl text-slate-600 leading-relaxed font-medium">
+                        Lee la palabra, luego enseguida elije si es sustantivo propio o comun, y en seguida escribe la palabra como debe ser escrita no olvides los acentos. Como siempre sabes que si se ilumina en verde esta bien pero si se ilumina en rojo debes volver a intentar.
+                    </p>
+                </div>
+                
+                <div class="flex flex-col items-center">
+                    <button class="btn-audio" onclick="leerInstrucciones()">
+                        <span class="text-3xl">📢</span>
+                    </button>
+                    <span class="text-xs font-bold text-green-600 mt-2 uppercase">¡Escucha!</span>
+                </div>
             </div>
         </header>
 
         <div id="ejercicios" class="space-y-6">
-            <!-- Las 50 palabras se cargarán aquí -->
+            <!-- Dinámico -->
         </div>
     </div>
 
     <script>
-        // Lista de 50 palabras con acentos correctos en la base y el objetivo
+        // Configuración de Voz para iOS/iPad
+        let vocesDisponibles = [];
+
+        function cargarVoces() {
+            vocesDisponibles = window.speechSynthesis.getVoices();
+        }
+
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = cargarVoces;
+        }
+
+        function leerInstrucciones() {
+            window.speechSynthesis.cancel();
+
+            const texto = document.getElementById('texto-instrucciones').innerText;
+            const mensaje = new SpeechSynthesisUtterance(texto);
+            
+            mensaje.lang = 'es-MX';
+            mensaje.rate = 0.9;   
+            mensaje.pitch = 1.2;  
+
+            const vozPreferida = vocesDisponibles.find(v => 
+                (v.lang.includes('es')) && 
+                (v.name.includes('Sofia') || v.name.includes('Sandra') || v.name.includes('Niña') || v.name.includes('Femenina') || v.name.includes('Monica'))
+            );
+
+            if (vozPreferida) {
+                mensaje.voice = vozPreferida;
+            }
+
+            window.speechSynthesis.speak(mensaje);
+        }
+
         const palabras = [
             { base: "perro", tipo: "comun", correcta: "perro" },
             { base: "méxico", tipo: "propio", correcta: "México" },
@@ -145,13 +209,13 @@
                 </div>
                 
                 <select onchange="checkTipo(this, '${p.tipo}')" class="w-full h-full">
-                    <option value="">¿Tipo?</option>
+                    <option value="">¿Tipo? 🤔</option>
                     <option value="comun">Común</option>
                     <option value="propio">Propio</option>
                 </select>
 
                 <input type="text" 
-                    placeholder="Escríbela..." 
+                    placeholder="Escribe aquí..." 
                     oninput="checkEscritura(this, '${p.correcta}')"
                     class="w-full"
                 >
@@ -184,13 +248,15 @@
             } else if (val === correctValue) {
                 element.classList.add('correct');
                 element.classList.remove('incorrect');
-                iconArea.innerHTML = "<span class='text-green-600 text-2xl'>✨ ¡Muy bien!</span>";
+                iconArea.innerHTML = "<span class='text-green-600 text-xl'>✨ ¡Genial!</span>";
             } else {
                 element.classList.add('incorrect');
                 element.classList.remove('correct');
-                iconArea.innerHTML = "<span class='text-red-500'>Revisa...</span>";
+                iconArea.innerHTML = "<span class='text-red-500'>Vuelve a intentar ❌</span>";
             }
         }
+
+        window.onload = cargarVoces;
     </script>
 </body>
 </html>
