@@ -10,7 +10,7 @@
         
         body {
             font-family: 'Quicksand', sans-serif;
-            background-color: #f0fdfa;
+            background: linear-gradient(135deg, #f0fdfa 0%, #dcfce7 100%);
             color: #1e293b;
             display: flex;
             flex-direction: column;
@@ -21,112 +21,140 @@
 
         .game-card {
             background: white;
-            border-radius: 30px;
+            border-radius: 40px;
             padding: 2.5rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-            border: 4px solid #10b981;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 8px solid #34d399;
             max-width: 700px; 
             width: 95%;
             text-align: center;
+            position: relative;
         }
 
         .btn-speaker {
-            background-color: #d1fae5;
-            border: 4px solid #10b981;
+            background-color: #fbbf24;
+            border: 6px solid #f59e0b;
             border-radius: 50%;
-            width: 130px;
-            height: 130px;
+            width: 140px;
+            height: 140px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 8px 0 #047857;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 0 #b45309;
             margin: 0 auto 1.5rem;
         }
 
         .btn-speaker:active {
-            transform: translateY(4px);
-            box-shadow: 0 4px 0 #047857;
+            transform: translateY(6px);
+            box-shadow: 0 4px 0 #b45309;
+        }
+
+        .btn-speaker span {
+            filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.1));
         }
 
         input {
-            border: 5px solid #cbd5e1;
-            border-radius: 20px;
+            border: 6px solid #94a3b8;
+            border-radius: 25px;
             padding: 1.5rem; 
             outline: none;
             font-weight: 700;
-            font-size: 2.5rem; 
+            font-size: 2.2rem; 
             text-align: center;
             width: 100%;
             transition: all 0.3s;
             margin-top: 15px;
             color: #064e3b;
+            background-color: #f8fafc;
         }
 
         .input-correct {
             border-color: #22c55e !important;
             background-color: #f0fdf4 !important;
             color: #15803d !important;
-            animation: bounce 0.5s;
+            animation: bounce 0.6s;
         }
 
         .input-incorrect {
             border-color: #ef4444 !important;
             background-color: #fef2f2 !important;
             color: #b91c1c !important;
-            animation: shake 0.3s;
+            animation: shake 0.4s;
         }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+            20% { transform: translateX(-12px); }
+            40% { transform: translateX(12px); }
+            60% { transform: translateX(-8px); }
+            80% { transform: translateX(8px); }
         }
 
         @keyframes bounce {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            50% { transform: scale(1.08); }
         }
 
         .progress-bar {
-            height: 18px;
+            height: 24px;
             background: #e2e8f0;
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
             width: 100%;
             margin-top: 1.5rem;
+            border: 3px solid #cbd5e1;
         }
 
         .progress-fill {
             height: 100%;
-            background: #10b981;
+            background: linear-gradient(90deg, #10b981, #34d399);
             width: 0%;
-            transition: width 0.5s;
+            transition: width 0.5s ease-out;
         }
 
         .instruction-badge {
             background-color: #fffbeb;
-            border: 2px dashed #f59e0b;
-            padding: 12px;
-            border-radius: 15px;
-            margin-bottom: 20px;
+            border: 4px dashed #fbbf24;
+            padding: 15px;
+            border-radius: 20px;
+            margin-bottom: 25px;
             color: #92400e;
-            font-weight: 700;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+
+        .floating-emoji {
+            position: absolute;
+            font-size: 2rem;
+            pointer-events: none;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
     </style>
 </head>
 <body>
 
-    <div class="mt-6 mb-6 text-center">
-        <h1 class="text-4xl font-bold text-emerald-700 mb-2">✍️ El Gran Dictado Pro</h1>
-        <p class="text-lg text-emerald-900 font-bold">Comunes y Propios mezclados ✨</p>
+    <div class="mt-4 mb-6 text-center">
+        <h1 class="text-5xl font-black text-emerald-700 mb-2 drop-shadow-sm">🌈 El Gran Dictado Mágico 🦄</h1>
+        <p class="text-xl text-emerald-900 font-bold">¡Escribe nombres propios y comunes! ✨</p>
     </div>
 
     <div class="game-card">
-        <div class="flex justify-between mb-4">
-            <span class="bg-emerald-100 text-emerald-700 px-4 py-1 rounded-full font-bold">Frase: <span id="current-word-num">1</span>/100</span>
-            <span class="bg-red-100 text-red-700 px-4 py-1 rounded-full font-bold">Errores: <span id="error-count">0</span> ❌</span>
+        <!-- Adornos visuales -->
+        <span class="floating-emoji" style="top: -20px; left: -20px;">🎨</span>
+        <span class="floating-emoji" style="top: -20px; right: -20px; animation-delay: 1s;">🧸</span>
+        <span class="floating-emoji" style="bottom: -20px; left: -20px; animation-delay: 2s;">🎈</span>
+        <span class="floating-emoji" style="bottom: -20px; right: -20px; animation-delay: 1.5s;">🍭</span>
+
+        <div class="flex justify-between mb-4 gap-2">
+            <span class="bg-emerald-100 text-emerald-700 px-5 py-2 rounded-2xl font-black text-lg border-2 border-emerald-200">📝 Frase: <span id="current-word-num">1</span>/100</span>
+            <span class="bg-rose-100 text-rose-700 px-5 py-2 rounded-2xl font-black text-lg border-2 border-rose-200">❌ Errores: <span id="error-count">0</span></span>
         </div>
 
         <div class="progress-bar">
@@ -135,84 +163,96 @@
 
         <div class="mt-8">
             <div class="instruction-badge">
-                <span class="text-2xl mr-2">⭐</span> <span>Usa mayúsculas, punto final y presiona Enter</span>
+                <span class="text-3xl">⭐</span> <span>Usa <b>Mayúsculas</b>, <b>punto final</b> y presiona <b>Enter</b></span>
             </div>
 
-            <button class="btn-speaker" onclick="reproducirPalabra()" id="speaker-btn">
-                <span class="text-7xl">📢</span>
+            <button class="btn-speaker" onclick="reproducirPalabra()" id="speaker-btn" title="Escuchar frase">
+                <span class="text-8xl">📢</span>
             </button>
             
-            <div id="status-msg" class="h-10 mb-2 font-bold text-xl"></div>
+            <div id="status-msg" class="h-12 mb-4 font-black text-2xl"></div>
             
-            <input type="text" id="word-input" placeholder="" autocomplete="off" onkeydown="siEsEnter(event)">
+            <input type="text" id="word-input" placeholder="Escribe aquí..." autocomplete="off" onkeydown="siEsEnter(event)">
             
             <div class="mt-8">
-                <p class="text-slate-400 italic text-base">Escribe y pulsa Enter. ¡Escucha bien si hay nombres!</p>
+                <p class="text-slate-500 font-bold text-lg">Paso 1: ¡Escucha! 👂</p>
+                <p class="text-slate-500 font-bold text-lg">Paso 2: ¡Escribe y pulsa Enter! ⌨️</p>
             </div>
         </div>
     </div>
 
-    <div id="final-screen" class="hidden fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 text-center">
-        <h2 class="text-6xl mb-4 font-bold text-emerald-600">🎉 ¡Reto Superado! 🎉</h2>
-        <p class="text-3xl mb-8">Has dominado los 100 dictados mezclados.</p>
-        <div class="bg-emerald-100 p-10 rounded-3xl shadow-xl">
-            <p class="text-4xl font-bold text-emerald-700">Total de errores: <span id="final-errors">0</span></p>
+    <div id="final-screen" class="hidden fixed inset-0 bg-emerald-50 z-50 flex flex-col items-center justify-center p-6 text-center">
+        <h2 class="text-7xl mb-6 font-black text-emerald-600 animate-bounce">🎊 ¡ERES INCREÍBLE! 🎊</h2>
+        <p class="text-4xl mb-10 font-bold text-emerald-800">¡Terminaste todas las frases mágicas!</p>
+        <div class="bg-white p-12 rounded-[50px] shadow-2xl border-8 border-emerald-400">
+            <p class="text-5xl font-black text-emerald-700">Total de errores: <span id="final-errors">0</span></p>
+            <p class="text-2xl mt-4 text-emerald-500 font-bold">¡Lo hiciste genial! 🏆</p>
         </div>
-        <button onclick="location.reload()" class="mt-12 bg-emerald-500 text-white px-10 py-5 rounded-full text-3xl font-bold shadow-lg hover:bg-emerald-600 transition">Jugar de nuevo 🔄</button>
+        <button onclick="location.reload()" class="mt-12 bg-emerald-500 text-white px-12 py-6 rounded-full text-4xl font-black shadow-[0_12px_0_#059669] active:translate-y-2 active:shadow-none hover:bg-emerald-400 transition-all">¡Jugar de nuevo! 🔄</button>
     </div>
 
     <audio id="sound-success" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
 
     <script>
-        // Lista mezclada: 50 comunes y 50 con propios en distintas posiciones
         const baseFrases = [
-            // Mezcla de 100 frases
+            // Lista simplificada y mezclada (100 frases)
             "La rana salta", "Hoy vino Luis", "El perro corre", "Busca a Ana", "El gato come", 
-            "Llama a Pepe", "La niña juega", "Mira a Marta", "El niño canta", "Canta con Juan",
-            "La foca nada", "Viaja a España", "El pato vuela", "Visita México", "La mesa brilla", 
-            "Mira a París", "El lobo aúlla", "Roma es vieja", "La vaca muge", "Cruza Chile hoy",
-            "El pájaro pía", "Marte es rojo", "La luna sale", "Venus brilla mucho", "El sol quema", 
-            "Saturno tiene anillos", "La flor crece", "Júpiter es gigante", "El barco flota", "Plutón está lejos",
-            "La mamá ríe", "Hola soy Betito", "El papá lee", "Dora busca mapas", "La abuela teje", 
-            "Lucas corre rápido", "El coche para", "Mateo escribe bien", "La lluvia cae", "Elena pinta mucho",
-            "El oso duerme", "Toby ladra fuerte", "La abeja vuela", "Michi duerme aquí", "El conejo salta", 
-            "Pipo vuela alto", "La tortuga camina", "Coco come mucho", "El león ruge", "Bibi nada bien",
+            "Llama a Pepe", "La nina juega", "Mira a Marta", "El nino canta", "Canta con Juan",
+            "La foca nada", "Viaja a Espana", "El pato vuela", "Visita Mexico", "La mesa brilla", 
+            "Mira a Paris", "El lobo aulla", "Roma es vieja", "La vaca muge", "Cruza Chile hoy",
+            "El pajaro pia", "Marte es rojo", "La luna sale", "Venus brilla mucho", "El sol quema", 
+            "Saturno tiene anillos", "La flor crece", "Jupiter es gigante", "El barco flota", "Pluton esta lejos",
+            "La mama rie", "Hola soy Betito", "El papa lee", "Dora busca mapas", "La abuela teje", 
+            "Lucas corre rapido", "El coche para", "Mateo escribe bien", "La lluvia cae", "Elena pinta mucho",
+            "El oso duerme", "Toby ladra fuerte", "La abeja vuela", "Michi duerme aqui", "El conejo salta", 
+            "Pipo vuela alto", "La tortuga camina", "Coco come mucho", "El leon ruge", "Bibi nada bien",
             "La pelota bota", "Madrid es grande", "El tren pita", "Lima tiene sol", "La puerta abre", 
-            "Quito tiene nubes", "El gallo canta", "Bogotá está lejos", "La sopa quema", "Tokio tiene luces",
-            "La casa limpia", "Sara barre todo", "El viento sopla", "Raúl sube alto", "El pez nada", 
-            "Inés baja pronto", "La estrella brilla", "Tomás abre cajas", "El fuego arde", "Rosa tiene flores",
-            "El río pasa", "Bruno corre fuera", "La nube viaja", "Luna sale tarde", "El libro enseña", 
+            "Quito tiene nubes", "El gallo canta", "Bogota esta lejos", "La sopa quema", "Tokio tiene luces",
+            "La casa limpia", "Sara barre todo", "El viento sopla", "Raul sube alto", "El pez nada", 
+            "Ines baja pronto", "La estrella brilla", "Tomas abre cajas", "El fuego arde", "Rosa tiene flores",
+            "El rio pasa", "Bruno corre fuera", "La nube viaja", "Luna sale tarde", "El libro ensena", 
             "Sol calienta mucho", "La radio suena", "Nube tapa sol", "El reloj marca", "Viento sopla hoy",
-            "La sopa sabe", "Carlos arregla esto", "El bebé llora", "Diana compra fruta", "La llave gira", 
-            "Mario gana siempre", "El zapato aprieta", "Lucía busca llaves", "La hormiga carga", "Óscar rompe algo",
-            "El tigre caza", "África tiene selvas", "La cebra corre", "Asia es inmensa", "El mono trepa", 
-            "Europa tiene nieve", "La vaca pasta", "América es grande", "El ratón escapa", "Oceanía tiene mar"
+            "La sopa sabe", "Carlos arregla esto", "El bebe llora", "Diana compra fruta", "La llave gira", 
+            "Mario gana siempre", "El zapato aprieta", "Lucia busca llaves", "La hormiga carga", "Oscar rompe algo",
+            "El tigre caza", "Africa tiene selvas", "La cebra corre", "Asia es inmensa", "El mono trepa", 
+            "Europa tiene nieve", "La vaca pasta", "America es grande", "El raton escapa", "Oceania tiene mar"
         ];
 
         const frases = baseFrases.map(f => f + ".");
         let currentIndex = 0;
         let errors = 0;
-        let vocesDisponibles = [];
+        let vozSeleccionada = null;
+
+        // Función para normalizar texto (quitar acentos)
+        function normalizar(texto) {
+            return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
 
         function cargarVoces() {
-            vocesDisponibles = window.speechSynthesis.getVoices();
+            const voces = window.speechSynthesis.getVoices();
+            if (voces.length === 0) return;
+
+            vozSeleccionada = voces.find(v => {
+                const nombre = v.name.toLowerCase();
+                return v.lang.startsWith('es') && 
+                       (nombre.includes('sofía') || nombre.includes('sandra') || 
+                        nombre.includes('niña') || nombre.includes('femenina') || 
+                        nombre.includes('female'));
+            }) || voces.find(v => v.lang === 'es-MX') || voces.find(v => v.lang.startsWith('es'));
         }
 
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = cargarVoces;
         }
 
-        function configurarVoz(mensaje) {
-            mensaje.lang = 'es-MX';
-            mensaje.rate = 0.75; 
-            const voz = vocesDisponibles.find(v => v.lang.includes('es'));
-            if (voz) mensaje.voice = voz;
-        }
-
         function reproducirPalabra() {
             window.speechSynthesis.cancel();
+            if (!vozSeleccionada) cargarVoces();
             const mensaje = new SpeechSynthesisUtterance(baseFrases[currentIndex]);
-            configurarVoz(mensaje);
+            if (vozSeleccionada) mensaje.voice = vozSeleccionada;
+            mensaje.lang = 'es-MX';
+            mensaje.rate = 0.9;
+            mensaje.pitch = 1.2;
             window.speechSynthesis.speak(mensaje);
         }
 
@@ -224,13 +264,14 @@
 
         function validarEscritura() {
             const input = document.getElementById('word-input');
-            const valor = input.value.trim().replace(/\s+/g, ' '); 
+            const valorEscrito = input.value.trim().replace(/\s+/g, ' '); 
             const fraseCorrecta = frases[currentIndex];
 
-            if (valor === fraseCorrecta) {
+            // Comparamos versiones normalizadas (sin acentos)
+            if (normalizar(valorEscrito) === normalizar(fraseCorrecta)) {
                 marcarCorrecto();
             } else {
-                marcarIncorrecto(valor);
+                marcarIncorrecto(valorEscrito);
             }
         }
 
@@ -240,7 +281,7 @@
             const successSound = document.getElementById('sound-success');
 
             input.classList.add('input-correct');
-            statusMsg.innerHTML = "<span class='text-green-600'>¡Excelente! ✅</span>";
+            statusMsg.innerHTML = "<span class='text-green-500'>¡GENIAL! ⭐⭐⭐</span>";
             try { successSound.play(); } catch(e) {}
 
             setTimeout(() => {
@@ -249,11 +290,11 @@
                     actualizarUI();
                     setTimeout(() => {
                         reproducirPalabra();
-                    }, 500);
+                    }, 600);
                 } else {
                     mostrarPantallaFinal();
                 }
-            }, 1000);
+            }, 1200);
         }
 
         function marcarIncorrecto(valor) {
@@ -266,9 +307,9 @@
             input.classList.add('input-incorrect');
             
             if (valor.length === 0) {
-                statusMsg.innerHTML = "<span class='text-red-500'>¡Escribe la frase!</span>";
+                statusMsg.innerHTML = "<span class='text-rose-500'>¡Escribe algo! ✏️</span>";
             } else if (!valor.endsWith('.')) {
-                statusMsg.innerHTML = "<span class='text-red-500'>Falta el punto final 📍</span>";
+                statusMsg.innerHTML = "<span class='text-rose-500'>Pon el punto final 📍</span>";
             } else {
                 const palabrasEscritas = valor.split(' ');
                 const palabrasCorrectas = fraseCorrecta.split(' ');
@@ -276,6 +317,7 @@
 
                 for (let i = 0; i < palabrasCorrectas.length; i++) {
                     if (palabrasEscritas[i]) {
+                        // Comprobación de mayúsculas (esta sí se mantiene estricta)
                         if (palabrasCorrectas[i][0] === palabrasCorrectas[i][0].toUpperCase() && 
                             palabrasEscritas[i][0] !== palabrasEscritas[i][0].toUpperCase()) {
                             errorMayuscula = true;
@@ -285,9 +327,9 @@
                 }
 
                 if (errorMayuscula) {
-                    statusMsg.innerHTML = "<span class='text-red-500'>Revisa las MAYÚSCULAS 🏛️</span>";
+                    statusMsg.innerHTML = "<span class='text-rose-500'>Revisa las MAYÚSCULAS 🏛️</span>";
                 } else {
-                    statusMsg.innerHTML = "<span class='text-red-500'>Revisa las letras ❌</span>";
+                    statusMsg.innerHTML = "<span class='text-rose-500'>¡Sigue intentando! 🔄</span>";
                 }
             }
 
