@@ -43,21 +43,20 @@
             line-height: 2.2; 
             text-align: left;
             margin: 1.5rem 0;
-            color: #334155;
+            color: #64748b; /* Color base más tenue */
             font-weight: 600;
         }
 
         .word {
             display: inline-block;
             margin-right: 10px;
-            padding: 0 2px;
-            border-bottom: 4px solid transparent;
-            transition: none; 
+            transition: none; /* Sin transiciones para máximo rendimiento */
         }
 
+        /* Solo cambiamos el color para evitar "Reflow" y lag en Safari */
         .word.highlight {
-            border-bottom: 4px solid #0284c7;
             color: #0284c7;
+            font-weight: 800;
         }
 
         .status-badge {
@@ -104,11 +103,11 @@
         </div>
 
         <div class="mt-4 text-slate-400 font-bold italic pb-6">
-            Auto-scrolling is ON! 🚀
+            Optimized for iPad Safari 🚀
         </div>
     </div>
 
-    <div id="repeat-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center center p-6" onclick="event.stopPropagation()">
+    <div id="repeat-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6" onclick="event.stopPropagation()">
         <div class="bg-white p-8 rounded-[35px] shadow-2xl border-8 border-sky-400 text-center max-w-sm">
             <h2 class="text-3xl font-black text-sky-600 mb-3">You did it! 🎊</h2>
             <p class="text-xl font-bold text-slate-600 mb-6">Want to practice again?</p>
@@ -117,9 +116,9 @@
     </div>
 
     <script>
-        const text = "In math class, I learned that numbers have a special place, just like a chair where they sit. Only one number can fit in each chair at a time! The last chair on the right is called the ones place, and the chair to the left is called the tens place. We call this whole system place value. For example, if I have the number 24, it means that I have 2 tens and 4 ones. It is so easy to understand numbers when they have their own special seats!";
+        const originalText = "In math class, I learned that numbers have a special place, just like a chair where they sit. Only one number can fit in each chair at a time! The last chair on the right is called the ones place, and the chair to the left is called the tens place. We call this whole system place value. For example, if I have the number 24, it means that I have 2 tens and 4 ones. It is so easy to understand numbers when they have their own special seats!";
         
-        const wordsArray = text.split(" ");
+        const wordsArray = originalText.split(" ");
         const paragraphContainer = document.getElementById('paragraph');
         const mainCard = document.getElementById('main-card');
         
@@ -129,15 +128,25 @@
         let synth = window.speechSynthesis;
         let voices = [];
         let currentUtterance = null;
-        let lastKnownIndex = 0;
 
-        // Inyectamos las palabras
+        // Mapeo de índices de caracteres para saber exactamente dónde empieza cada palabra
+        const wordRanges = [];
+        let charAcc = 0;
+
+        // Inyectamos las palabras y construimos el mapa de rangos
         wordsArray.forEach((word, index) => {
             const span = document.createElement('span');
             span.classList.add('word');
             span.id = `word-${index}`;
             span.innerText = word;
             paragraphContainer.appendChild(span);
+
+            wordRanges.push({
+                start: charAcc,
+                end: charAcc + word.length,
+                index: index
+            });
+            charAcc += word.length + 1; // +1 por el espacio
         });
 
         function loadVoices() {
@@ -163,24 +172,22 @@
         }
 
         function resumeOrStart() {
-            // Si terminamos el texto, reiniciamos
             if (currentWordIndex >= wordsArray.length) {
                 currentWordIndex = 0;
-                lastKnownIndex = 0;
             }
             
             isPlaying = true;
             updateStatusUI(true);
 
-            // Generamos el texto faltante
-            const textToSpeak = wordsArray.slice(currentWordIndex).join(" ");
-            currentUtterance = new SpeechSynthesisUtterance(textToSpeak);
+            // Obtenemos el texto desde la posición exacta del mapa de rangos
+            const startChar = wordRanges[currentWordIndex].start;
+            const textToSpeak = originalText.substring(startChar);
             
+            currentUtterance = new SpeechSynthesisUtterance(textToSpeak);
             currentUtterance.lang = 'en-US';
             currentUtterance.rate = 0.55; 
             currentUtterance.pitch = 1.1; 
 
-            // Selección de voz para iPad
             const preferredVoices = voices.filter(v => v.lang.includes('en-US'));
             const girlVoice = preferredVoices.find(v => 
                 v.name.includes('Samantha') || 
@@ -191,18 +198,18 @@
             
             if (girlVoice) currentUtterance.voice = girlVoice;
 
-            // Offset local para este tramo de audio
-            let localWordOffset = 0;
-
             currentUtterance.onboundary = (event) => {
                 if (event.name === 'word') {
-                    // Calculamos el índice REAL sumando el inicio del tramo + el progreso actual
-                    const actualIndex = currentWordIndex + localWordOffset;
+                    // Calculamos el índice global sumando el desplazamiento inicial
+                    const absoluteCharIndex = startChar + event.charIndex;
                     
-                    if (actualIndex < wordsArray.length) {
-                        highlightAndScroll(actualIndex);
-                        lastKnownIndex = actualIndex;
-                        localWordOffset++;
+                    // Buscamos a qué palabra pertenece este índice de carácter
+                    const wordMatch = wordRanges.find(r => absoluteCharIndex >= r.start && absoluteCharIndex < r.end + 1);
+                    
+                    if (wordMatch) {
+                        highlightAndScroll(wordMatch.index);
+                        // Guardamos el índice para la pausa
+                        currentWordIndex = wordMatch.index;
                     }
                 }
             };
@@ -219,15 +226,12 @@
 
         function pauseReading() {
             isPlaying = false;
-            synth.cancel(); // Paramos el motor de voz inmediatamente
+            synth.cancel(); 
             
-            // ACTUALIZACIÓN CRÍTICA:
-            // Seteamos el índice para la próxima reanudación exactamente en la siguiente palabra
-            currentWordIndex = lastKnownIndex + 1;
+            // Avanzamos uno para que al reanudar no repita la palabra actual
+            currentWordIndex++;
             
             updateStatusUI(false);
-            // Dejamos marcada la última palabra leída para que el niño no se pierda
-            highlightAndScroll(lastKnownIndex);
         }
 
         function updateStatusUI(playing) {
@@ -247,7 +251,6 @@
         }
 
         function highlightAndScroll(index) {
-            // Limpiamos resaltados previos
             const prev = document.querySelector('.word.highlight');
             if (prev) prev.classList.remove('highlight');
             
@@ -259,7 +262,7 @@
                 const wordRect = wordSpan.getBoundingClientRect();
                 const relativeTop = wordRect.top - cardRect.top + mainCard.scrollTop;
                 
-                // Scroll instantáneo para evitar lag en iPad
+                // Movimiento instantáneo
                 mainCard.scrollTo({
                     top: relativeTop - (mainCard.clientHeight / 2),
                     behavior: 'auto'
@@ -278,11 +281,10 @@
             }, 500);
         }
 
-        function resetAndRead(e) {
-            if(e) e.stopPropagation();
+        function resetAndRead(event) {
+            if(event) event.stopPropagation();
             document.getElementById('repeat-modal').classList.add('hidden');
             currentWordIndex = 0;
-            lastKnownIndex = 0;
             resumeOrStart();
             mainCard.scrollTo({ top: 0 });
         }
