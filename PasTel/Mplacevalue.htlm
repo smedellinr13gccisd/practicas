@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Superhero Reader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 40px;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            border: 8px solid #38bdf8;
+            max-width: 800px; 
+            width: 95%;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+            max-height: 80vh;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .text-container {
+            /* Reducido de 2.4rem a 2rem */
+            font-size: 2rem;
+            line-height: 2.6; 
+            text-align: left;
+            margin: 1.5rem 0;
+            color: #334155;
+            font-weight: 600;
+        }
+
+        .word {
+            display: inline-block;
+            margin-right: 12px;
+            position: relative;
+            padding: 2px 8px;
+            border-radius: 12px;
+            transition: all 0.15s ease;
+            border-bottom: 5px solid transparent;
+        }
+
+        .word.highlight {
+            color: #ffffff;
+            background-color: #0284c7;
+            border-bottom: 5px solid #0369a1;
+            transform: scale(1.1) translateY(-4px);
+            box-shadow: 0 6px 12px rgba(2, 132, 199, 0.3);
+            z-index: 10;
+        }
+
+        .star-indicator {
+            position: absolute;
+            /* Ajustado para el nuevo tamaño de letra */
+            top: -55px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.5rem;
+            display: none;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2));
+            animation: bounce 0.4s infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateX(-50%) translateY(0); }
+            to { transform: translateX(-50%) translateY(-12px); }
+        }
+
+        .status-badge {
+            background-color: #fbbf24;
+            color: #92400e;
+            padding: 10px 30px;
+            border-radius: 20px;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+            box-shadow: 0 5px 0 #b45309;
+        }
+
+        .reading-active {
+            background-color: #22c55e;
+            color: white;
+            box-shadow: 0 5px 0 #166534;
+        }
+
+        .floating-emoji {
+            position: absolute;
+            font-size: 2rem;
+            pointer-events: none;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(5deg); }
+        }
+
+        .game-card::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body onclick="handleGlobalClick(event)">
+
+    <div class="mt-4 mb-4 text-center">
+        <h1 class="text-4xl font-black text-sky-700 mb-1">🦸‍♂️ Math Superhero Reader 🦸‍♀️</h1>
+        <p class="text-lg text-sky-900 font-bold">Touch anywhere to Play/Pause! ✨</p>
+    </div>
+
+    <div class="game-card" id="main-card">
+        <span class="floating-emoji" style="top: -20px; left: -20px;">🔢</span>
+        <span class="floating-emoji" style="top: -20px; right: -20px; animation-delay: 1s;">⚡</span>
+        <span class="floating-emoji" style="bottom: -20px; left: -20px; animation-delay: 2s;">📐</span>
+        <span class="floating-emoji" style="bottom: -20px; right: -20px; animation-delay: 1.5s;">🌟</span>
+
+        <div class="flex justify-between items-center mb-4 sticky top-0 bg-white/95 backdrop-blur-sm z-20 py-2">
+            <span class="bg-sky-100 text-sky-700 px-5 py-2 rounded-xl font-black text-lg border-2 border-sky-200">
+                📖 Read: <span id="read-count">0</span>
+            </span>
+            <div id="play-status" class="status-badge text-lg">
+                <span id="status-icon">▶️</span> <span id="status-text">Tap Screen</span>
+            </div>
+        </div>
+
+        <div id="paragraph" class="text-container">
+            <!-- Words injected here -->
+        </div>
+
+        <div class="mt-4 text-slate-400 font-bold italic pb-6">
+            Auto-scrolling is ON! 🚀
+        </div>
+    </div>
+
+    <div id="repeat-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6" onclick="event.stopPropagation()">
+        <div class="bg-white p-8 rounded-[35px] shadow-2xl border-8 border-sky-400 text-center max-w-sm">
+            <h2 class="text-3xl font-black text-sky-600 mb-3">You did it! 🎊</h2>
+            <p class="text-xl font-bold text-slate-600 mb-6">Want to practice again?</p>
+            <button onclick="resetAndRead(event)" class="bg-sky-500 text-white px-8 py-3 rounded-full text-xl font-black shadow-[0_6px_0_#0369a1] active:translate-y-1 hover:bg-sky-400">Yes! 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        const text = "In math class, I learned that numbers have a special place, just like a chair where they sit. Only one number can fit in each chair at a time! The last chair on the right is called the ones place, and the chair to the left is called the tens place. We call this whole system place value. For example, if I have the number 24, it means that I have 2 tens and 4 ones. It is so easy to understand numbers when they have their own special seats!";
+        
+        const wordsArray = text.split(" ");
+        const paragraphContainer = document.getElementById('paragraph');
+        const mainCard = document.getElementById('main-card');
+        let currentWordIndex = 0; 
+        let isPlaying = false;
+        let readCount = 0;
+        let synth = window.speechSynthesis;
+        let voices = [];
+        let currentUtterance = null;
+        let lastBoundaryIndex = 0;
+
+        wordsArray.forEach((word, index) => {
+            const span = document.createElement('span');
+            span.classList.add('word');
+            span.id = `word-${index}`;
+            span.innerHTML = `<span class="star-indicator">⭐</span>${word}`;
+            paragraphContainer.appendChild(span);
+        });
+
+        function loadVoices() {
+            voices = synth.getVoices();
+        }
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        function handleGlobalClick(e) {
+            if (!document.getElementById('repeat-modal').classList.contains('hidden')) return;
+            toggleSpeech();
+        }
+
+        function toggleSpeech() {
+            if (isPlaying) {
+                pauseReading();
+            } else {
+                resumeOrStart();
+            }
+        }
+
+        function resumeOrStart() {
+            if (currentWordIndex >= wordsArray.length) {
+                currentWordIndex = 0;
+                clearHighlights();
+            }
+            
+            isPlaying = true;
+            updateStatusUI(true);
+
+            const textToSpeak = wordsArray.slice(currentWordIndex).join(" ");
+            currentUtterance = new SpeechSynthesisUtterance(textToSpeak);
+            
+            currentUtterance.lang = 'en-US';
+            currentUtterance.rate = 0.5; 
+            currentUtterance.pitch = 1.35; 
+
+            const preferredVoices = voices.filter(v => v.lang.includes('en-US'));
+            const girlVoice = preferredVoices.find(v => 
+                v.name.includes('Samantha') || 
+                v.name.includes('Zira') || 
+                v.name.includes('Junior') || 
+                v.name.includes('Victoria')
+            );
+            
+            if (girlVoice) currentUtterance.voice = girlVoice;
+
+            let localWordCounter = 0;
+
+            currentUtterance.onboundary = (event) => {
+                if (event.name === 'word') {
+                    const globalIndex = currentWordIndex + localWordCounter;
+                    if (globalIndex < wordsArray.length) {
+                        highlightWord(globalIndex);
+                        lastBoundaryIndex = globalIndex;
+                    }
+                    localWordCounter++;
+                }
+            };
+
+            currentUtterance.onend = () => {
+                if (isPlaying) {
+                    currentWordIndex = wordsArray.length;
+                    finishReading();
+                }
+            };
+
+            synth.speak(currentUtterance);
+        }
+
+        function pauseReading() {
+            isPlaying = false;
+            synth.cancel(); 
+            currentWordIndex = lastBoundaryIndex + 1;
+            updateStatusUI(false);
+            highlightWord(lastBoundaryIndex);
+        }
+
+        function updateStatusUI(playing) {
+            const icon = document.getElementById('status-icon');
+            const textEl = document.getElementById('status-text');
+            const badge = document.getElementById('play-status');
+            
+            if (playing) {
+                icon.innerText = "⏸️";
+                textEl.innerText = "Reading...";
+                badge.classList.add('reading-active');
+            } else {
+                icon.innerText = "▶️";
+                textEl.innerText = "Paused";
+                badge.classList.remove('reading-active');
+            }
+        }
+
+        function highlightWord(index) {
+            clearHighlights();
+            const wordSpan = document.getElementById(`word-${index}`);
+            if (wordSpan) {
+                wordSpan.classList.add('highlight');
+                const star = wordSpan.querySelector('.star-indicator');
+                if (star) star.style.display = 'block';
+                
+                const cardRect = mainCard.getBoundingClientRect();
+                const wordRect = wordSpan.getBoundingClientRect();
+                const relativeTop = wordRect.top - cardRect.top + mainCard.scrollTop;
+                
+                mainCard.scrollTo({
+                    top: relativeTop - (mainCard.clientHeight / 2) + (wordRect.height / 2),
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.word').forEach(el => {
+                el.classList.remove('highlight');
+                const star = el.querySelector('.star-indicator');
+                if (star) star.style.display = 'none';
+            });
+        }
+
+        function finishReading() {
+            isPlaying = false;
+            readCount++;
+            document.getElementById('read-count').innerText = readCount;
+            updateStatusUI(false);
+            
+            setTimeout(() => {
+                document.getElementById('repeat-modal').classList.remove('hidden');
+            }, 800);
+        }
+
+        function resetAndRead(e) {
+            if(e) e.stopPropagation();
+            document.getElementById('repeat-modal').classList.add('hidden');
+            currentWordIndex = 0;
+            lastBoundaryIndex = 0;
+            clearHighlights();
+            resumeOrStart();
+            mainCard.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.onload = loadVoices;
+    </script>
+</body>
+</html>
