@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Superhero Reader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 40px;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 8px solid #38bdf8;
+            max-width: 800px; 
+            width: 95%;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+            max-height: 75vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .text-container {
+            font-size: 2rem;
+            line-height: 2.2; 
+            text-align: left;
+            margin: 1.5rem 0;
+            color: #1e293b; 
+            font-weight: 600;
+        }
+
+        .word {
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .status-badge {
+            background-color: #fbbf24;
+            color: #92400e;
+            padding: 10px 30px;
+            border-radius: 20px;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+            box-shadow: 0 4px 0 #b45309;
+        }
+
+        .reading-active {
+            background-color: #22c55e;
+            color: white;
+            box-shadow: 0 4px 0 #166534;
+        }
+
+        .game-card::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body onclick="handleGlobalClick(event)">
+
+    <div class="mt-4 mb-4 text-center">
+        <h1 class="text-4xl font-black text-sky-700 mb-1">🦸‍♂️ Math Superhero Reader 🦸‍♀️</h1>
+        <p class="text-lg text-sky-900 font-bold">Touch to Play/Pause! (iPad Optimized 🍎)</p>
+    </div>
+
+    <div class="game-card" id="main-card">
+        <div class="flex justify-between items-center mb-4 sticky top-0 bg-white/95 z-20 py-2">
+            <span class="bg-sky-100 text-sky-700 px-5 py-2 rounded-xl font-black text-lg border-2 border-sky-200">
+                📖 Read: <span id="read-count">0</span>
+            </span>
+            <div id="play-status" class="status-badge text-lg">
+                <span id="status-icon">▶️</span> <span id="status-text">Tap Screen</span>
+            </div>
+        </div>
+
+        <div id="paragraph" class="text-container">
+            <!-- Words injected here -->
+        </div>
+
+        <div class="mt-4 text-slate-400 font-bold italic pb-6">
+            Enhanced Sync Logic for Safari (iOS).
+        </div>
+    </div>
+
+    <div id="repeat-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6" onclick="event.stopPropagation()">
+        <div class="bg-white p-8 rounded-[35px] shadow-2xl border-8 border-sky-400 text-center max-w-sm">
+            <h2 class="text-3xl font-black text-sky-600 mb-3">You did it! 🎊</h2>
+            <p class="text-xl font-bold text-slate-600 mb-6">Want to practice again?</p>
+            <button onclick="resetAndRead(event)" class="bg-sky-500 text-white px-8 py-3 rounded-full text-xl font-black shadow-[0_6px_0_#0369a1] active:translate-y-1">Yes! 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        const originalText = "In my math class, I learned all about 2D shapes and their special names. I know that a circle is round and has no corners, while a square has four sides that are all the same. A triangle is fun to draw because it has three pointy corners and three straight sides. I can find these shapes everywhere, like in a pizza slice or a window! Now I am a shape detective because I can see geometry all around my classroom.";
+        
+        const wordsArray = originalText.split(" ");
+        const paragraphContainer = document.getElementById('paragraph');
+        const mainCard = document.getElementById('main-card');
+        
+        let currentWordIndex = 0; 
+        let isPlaying = false;
+        let readCount = 0;
+        let synth = window.speechSynthesis;
+        let voices = [];
+        let currentUtterance = null;
+        
+        // Seguimiento estricto para evitar retrocesos en Safari
+        let lastConfirmedIndex = 0;
+
+        const wordRanges = [];
+        let charAcc = 0;
+
+        wordsArray.forEach((word, index) => {
+            const span = document.createElement('span');
+            span.classList.add('word');
+            span.id = `word-${index}`;
+            span.innerText = word;
+            paragraphContainer.appendChild(span);
+
+            wordRanges.push({
+                start: charAcc,
+                end: charAcc + word.length,
+                index: index
+            });
+            charAcc += word.length + 1; 
+        });
+
+        function loadVoices() {
+            voices = synth.getVoices();
+        }
+        
+        loadVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        function handleGlobalClick(e) {
+            if (!document.getElementById('repeat-modal').classList.contains('hidden')) return;
+            toggleSpeech();
+        }
+
+        function toggleSpeech() {
+            if (isPlaying) {
+                pauseReading();
+            } else {
+                resumeOrStart();
+            }
+        }
+
+        function resumeOrStart() {
+            // Aseguramos que nunca empiece antes de la última palabra escuchada
+            if (currentWordIndex >= wordsArray.length) {
+                currentWordIndex = 0;
+                lastConfirmedIndex = 0;
+            }
+
+            isPlaying = true;
+            updateStatusUI(true);
+
+            // Cortamos el texto desde el punto exacto guardado
+            const startChar = wordRanges[currentWordIndex].start;
+            const textToSpeak = originalText.substring(startChar);
+            
+            currentUtterance = new SpeechSynthesisUtterance(textToSpeak);
+            currentUtterance.lang = 'en-US';
+            currentUtterance.rate = 0.55; 
+            currentUtterance.pitch = 1.1; 
+
+            const preferredVoices = voices.filter(v => v.lang.includes('en-US'));
+            const girlVoice = preferredVoices.find(v => 
+                v.name.includes('Samantha') || 
+                v.name.includes('Nicky') || 
+                v.name.includes('Victoria') ||
+                v.name.includes('Apple')
+            ) || preferredVoices[0];
+            
+            if (girlVoice) currentUtterance.voice = girlVoice;
+
+            currentUtterance.onboundary = (event) => {
+                if (event.name === 'word') {
+                    const absoluteCharIndex = startChar + event.charIndex;
+                    const wordMatch = wordRanges.find(r => absoluteCharIndex >= r.start && absoluteCharIndex < r.end + 1);
+                    
+                    if (wordMatch) {
+                        // Solo avanzamos, nunca retrocedemos el índice visual
+                        if (wordMatch.index >= lastConfirmedIndex) {
+                            lastConfirmedIndex = wordMatch.index;
+                            currentWordIndex = wordMatch.index;
+                            autoScroll(wordMatch.index);
+                        }
+                    }
+                }
+            };
+
+            currentUtterance.onend = () => {
+                if (isPlaying) {
+                    currentWordIndex = wordsArray.length;
+                    finishReading();
+                }
+            };
+
+            // Safari a veces falla al iniciar si no cancelamos primero
+            synth.cancel();
+            setTimeout(() => {
+                if (isPlaying) synth.speak(currentUtterance);
+            }, 50);
+        }
+
+        function pauseReading() {
+            isPlaying = false;
+            // Guardamos el progreso ANTES de cancelar, porque el cancel en Safari limpia eventos
+            synth.cancel(); 
+            
+            // Forzamos el salto a la siguiente palabra basándonos en nuestra variable local
+            // Esto es lo que garantiza que no se regrese 3-4 palabras
+            currentWordIndex = lastConfirmedIndex + 1;
+            
+            updateStatusUI(false);
+        }
+
+        function updateStatusUI(playing) {
+            const icon = document.getElementById('status-icon');
+            const textEl = document.getElementById('status-text');
+            const badge = document.getElementById('play-status');
+            
+            if (playing) {
+                icon.innerText = "⏸️";
+                textEl.innerText = "Reading...";
+                badge.classList.add('reading-active');
+            } else {
+                icon.innerText = "▶️";
+                textEl.innerText = "Paused";
+                badge.classList.remove('reading-active');
+            }
+        }
+
+        function autoScroll(index) {
+            const wordSpan = document.getElementById(`word-${index}`);
+            if (wordSpan) {
+                const cardRect = mainCard.getBoundingClientRect();
+                const wordRect = wordSpan.getBoundingClientRect();
+                const relativeTop = wordRect.top - cardRect.top + mainCard.scrollTop;
+                
+                mainCard.scrollTo({
+                    top: relativeTop - (mainCard.clientHeight / 2),
+                    behavior: 'auto'
+                });
+            }
+        }
+
+        function finishReading() {
+            isPlaying = false;
+            readCount++;
+            document.getElementById('read-count').innerText = readCount;
+            updateStatusUI(false);
+            
+            setTimeout(() => {
+                document.getElementById('repeat-modal').classList.remove('hidden');
+            }, 500);
+        }
+
+        function resetAndRead(event) {
+            if(event) event.stopPropagation();
+            document.getElementById('repeat-modal').classList.add('hidden');
+            currentWordIndex = 0;
+            lastConfirmedIndex = 0;
+            resumeOrStart();
+            mainCard.scrollTo({ top: 0 });
+        }
+
+        window.onload = loadVoices;
+    </script>
+</body>
+</html>
