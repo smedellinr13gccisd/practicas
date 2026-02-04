@@ -52,6 +52,11 @@
             margin-right: 10px;
         }
 
+        /* Mantendremos un cambio de color extremadamente sutil para el tracking interno */
+        .word.active-tracking {
+            color: #1e293b;
+        }
+
         .status-badge {
             background-color: #fbbf24;
             color: #92400e;
@@ -96,7 +101,7 @@
         </div>
 
         <div class="mt-4 text-slate-400 font-bold italic pb-6">
-            Visual pointer disabled for maximum performance.
+            Fixed Pause-and-Resume Logic for iPad Safari.
         </div>
     </div>
 
@@ -121,7 +126,9 @@
         let synth = window.speechSynthesis;
         let voices = [];
         let currentUtterance = null;
-        let lastConfirmedWordIndex = -1; // Seguimiento de seguridad
+        
+        // Esta es la variable clave: guardará la última palabra que REALMENTE se procesó visualmente
+        let realLastWordIndex = 0;
 
         const wordRanges = [];
         let charAcc = 0;
@@ -164,15 +171,16 @@
         }
 
         function resumeOrStart() {
+            // Siempre forzar la sincronización antes de empezar
             if (currentWordIndex >= wordsArray.length) {
                 currentWordIndex = 0;
-                lastConfirmedWordIndex = -1;
+                realLastWordIndex = 0;
             }
             
             isPlaying = true;
             updateStatusUI(true);
 
-            // Obtenemos el texto exacto desde donde se quedó
+            // Generar el nuevo texto exactamente desde el anclaje guardado
             const startChar = wordRanges[currentWordIndex].start;
             const textToSpeak = originalText.substring(startChar);
             
@@ -197,8 +205,10 @@
                     const wordMatch = wordRanges.find(r => absoluteCharIndex >= r.start && absoluteCharIndex < r.end + 1);
                     
                     if (wordMatch) {
-                        // Guardamos esta como la última palabra CONFIRMADA por el audio
-                        lastConfirmedWordIndex = wordMatch.index;
+                        // Actualizamos el índice de seguimiento real
+                        realLastWordIndex = wordMatch.index;
+                        // Sincronizamos el índice de lectura
+                        currentWordIndex = wordMatch.index;
                         autoScroll(wordMatch.index);
                     }
                 }
@@ -216,17 +226,13 @@
 
         function pauseReading() {
             isPlaying = false;
+            // Cancelación inmediata del audio de Safari
             synth.cancel(); 
             
-            // SOLUCIÓN DEFINITIVA: 
-            // Si tenemos una palabra confirmada, forzamos que el siguiente inicio sea la palabra + 1.
-            // Esto evita que Safari use el índice de caracteres errático del evento 'cancel'.
-            if (lastConfirmedWordIndex !== -1) {
-                currentWordIndex = lastConfirmedWordIndex + 1;
-            } else {
-                // Fallback de seguridad si se pausa antes de detectar la primera palabra
-                currentWordIndex = currentWordIndex; 
-            }
+            // CORRECCIÓN DEFINITIVA PARA SAFARI:
+            // Ignoramos lo que diga el objeto 'currentUtterance' tras el cancel.
+            // Forzamos que la próxima vez empiece exactamente en la palabra siguiente a la última confirmada visualmente.
+            currentWordIndex = realLastWordIndex + 1;
             
             updateStatusUI(false);
         }
@@ -276,7 +282,7 @@
             if(event) event.stopPropagation();
             document.getElementById('repeat-modal').classList.add('hidden');
             currentWordIndex = 0;
-            lastConfirmedWordIndex = -1;
+            realLastWordIndex = 0;
             resumeOrStart();
             mainCard.scrollTo({ top: 0 });
         }
