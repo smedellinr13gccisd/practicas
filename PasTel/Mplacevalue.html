@@ -26,22 +26,22 @@
             background: white;
             border-radius: 40px;
             padding: 2rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             border: 8px solid #38bdf8;
             max-width: 800px; 
             width: 95%;
             text-align: center;
             position: relative;
             cursor: pointer;
-            max-height: 80vh;
+            max-height: 75vh;
             overflow-y: auto;
-            scroll-behavior: smooth;
+            /* Optimización para iPad Safari */
+            -webkit-overflow-scrolling: touch;
         }
 
         .text-container {
-            /* Reducido de 2.4rem a 2rem */
             font-size: 2rem;
-            line-height: 2.6; 
+            line-height: 2.2; 
             text-align: left;
             margin: 1.5rem 0;
             color: #334155;
@@ -50,38 +50,17 @@
 
         .word {
             display: inline-block;
-            margin-right: 12px;
-            position: relative;
-            padding: 2px 8px;
-            border-radius: 12px;
-            transition: all 0.15s ease;
-            border-bottom: 5px solid transparent;
+            margin-right: 10px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            /* Eliminamos transiciones pesadas para evitar lag */
+            transition: background-color 0.1s;
         }
 
+        /* Resaltado simple y sin sombras para máximo rendimiento */
         .word.highlight {
             color: #ffffff;
             background-color: #0284c7;
-            border-bottom: 5px solid #0369a1;
-            transform: scale(1.1) translateY(-4px);
-            box-shadow: 0 6px 12px rgba(2, 132, 199, 0.3);
-            z-index: 10;
-        }
-
-        .star-indicator {
-            position: absolute;
-            /* Ajustado para el nuevo tamaño de letra */
-            top: -55px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 2.5rem;
-            display: none;
-            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2));
-            animation: bounce 0.4s infinite alternate;
-        }
-
-        @keyframes bounce {
-            from { transform: translateX(-50%) translateY(0); }
-            to { transform: translateX(-50%) translateY(-12px); }
         }
 
         .status-badge {
@@ -92,25 +71,19 @@
             font-weight: 800;
             margin-bottom: 0.5rem;
             display: inline-block;
-            box-shadow: 0 5px 0 #b45309;
+            box-shadow: 0 4px 0 #b45309;
         }
 
         .reading-active {
             background-color: #22c55e;
             color: white;
-            box-shadow: 0 5px 0 #166534;
+            box-shadow: 0 4px 0 #166534;
         }
 
         .floating-emoji {
             position: absolute;
             font-size: 2rem;
             pointer-events: none;
-            animation: float 4s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-12px) rotate(5deg); }
         }
 
         .game-card::-webkit-scrollbar {
@@ -122,16 +95,11 @@
 
     <div class="mt-4 mb-4 text-center">
         <h1 class="text-4xl font-black text-sky-700 mb-1">🦸‍♂️ Math Superhero Reader 🦸‍♀️</h1>
-        <p class="text-lg text-sky-900 font-bold">Touch anywhere to Play/Pause! ✨</p>
+        <p class="text-lg text-sky-900 font-bold">Touch to Play/Pause! (iPad Optimized 🍎)</p>
     </div>
 
     <div class="game-card" id="main-card">
-        <span class="floating-emoji" style="top: -20px; left: -20px;">🔢</span>
-        <span class="floating-emoji" style="top: -20px; right: -20px; animation-delay: 1s;">⚡</span>
-        <span class="floating-emoji" style="bottom: -20px; left: -20px; animation-delay: 2s;">📐</span>
-        <span class="floating-emoji" style="bottom: -20px; right: -20px; animation-delay: 1.5s;">🌟</span>
-
-        <div class="flex justify-between items-center mb-4 sticky top-0 bg-white/95 backdrop-blur-sm z-20 py-2">
+        <div class="flex justify-between items-center mb-4 sticky top-0 bg-white/95 z-20 py-2">
             <span class="bg-sky-100 text-sky-700 px-5 py-2 rounded-xl font-black text-lg border-2 border-sky-200">
                 📖 Read: <span id="read-count">0</span>
             </span>
@@ -153,7 +121,7 @@
         <div class="bg-white p-8 rounded-[35px] shadow-2xl border-8 border-sky-400 text-center max-w-sm">
             <h2 class="text-3xl font-black text-sky-600 mb-3">You did it! 🎊</h2>
             <p class="text-xl font-bold text-slate-600 mb-6">Want to practice again?</p>
-            <button onclick="resetAndRead(event)" class="bg-sky-500 text-white px-8 py-3 rounded-full text-xl font-black shadow-[0_6px_0_#0369a1] active:translate-y-1 hover:bg-sky-400">Yes! 🔄</button>
+            <button onclick="resetAndRead(event)" class="bg-sky-500 text-white px-8 py-3 rounded-full text-xl font-black shadow-[0_6px_0_#0369a1] active:translate-y-1">Yes! 🔄</button>
         </div>
     </div>
 
@@ -175,13 +143,16 @@
             const span = document.createElement('span');
             span.classList.add('word');
             span.id = `word-${index}`;
-            span.innerHTML = `<span class="star-indicator">⭐</span>${word}`;
+            span.innerText = word;
             paragraphContainer.appendChild(span);
         });
 
         function loadVoices() {
             voices = synth.getVoices();
         }
+        
+        // Soporte mejorado para carga de voces en iOS/Safari
+        loadVoices();
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = loadVoices;
         }
@@ -212,16 +183,17 @@
             currentUtterance = new SpeechSynthesisUtterance(textToSpeak);
             
             currentUtterance.lang = 'en-US';
-            currentUtterance.rate = 0.5; 
-            currentUtterance.pitch = 1.35; 
+            currentUtterance.rate = 0.55; // Ajustado para que no sea tan robótico pero sea lento
+            currentUtterance.pitch = 1.1; 
 
+            // Selección de voz optimizada para iPad (Samantha o Nicky son excelentes)
             const preferredVoices = voices.filter(v => v.lang.includes('en-US'));
             const girlVoice = preferredVoices.find(v => 
                 v.name.includes('Samantha') || 
-                v.name.includes('Zira') || 
-                v.name.includes('Junior') || 
-                v.name.includes('Victoria')
-            );
+                v.name.includes('Nicky') || 
+                v.name.includes('Victoria') ||
+                v.name.includes('Apple')
+            ) || preferredVoices[0];
             
             if (girlVoice) currentUtterance.voice = girlVoice;
 
@@ -277,16 +249,15 @@
             const wordSpan = document.getElementById(`word-${index}`);
             if (wordSpan) {
                 wordSpan.classList.add('highlight');
-                const star = wordSpan.querySelector('.star-indicator');
-                if (star) star.style.display = 'block';
                 
+                // Centrado automático más ligero para iPad
                 const cardRect = mainCard.getBoundingClientRect();
                 const wordRect = wordSpan.getBoundingClientRect();
                 const relativeTop = wordRect.top - cardRect.top + mainCard.scrollTop;
                 
                 mainCard.scrollTo({
-                    top: relativeTop - (mainCard.clientHeight / 2) + (wordRect.height / 2),
-                    behavior: 'smooth'
+                    top: relativeTop - (mainCard.clientHeight / 2),
+                    behavior: 'auto' // 'auto' es más rápido que 'smooth' en dispositivos viejos
                 });
             }
         }
@@ -294,8 +265,6 @@
         function clearHighlights() {
             document.querySelectorAll('.word').forEach(el => {
                 el.classList.remove('highlight');
-                const star = el.querySelector('.star-indicator');
-                if (star) star.style.display = 'none';
             });
         }
 
@@ -307,7 +276,7 @@
             
             setTimeout(() => {
                 document.getElementById('repeat-modal').classList.remove('hidden');
-            }, 800);
+            }, 500);
         }
 
         function resetAndRead(e) {
@@ -317,7 +286,7 @@
             lastBoundaryIndex = 0;
             clearHighlights();
             resumeOrStart();
-            mainCard.scrollTo({ top: 0, behavior: 'smooth' });
+            mainCard.scrollTo({ top: 0 });
         }
 
         window.onload = loadVoices;
