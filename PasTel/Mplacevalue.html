@@ -35,7 +35,6 @@
             cursor: pointer;
             max-height: 75vh;
             overflow-y: auto;
-            /* Optimización para iPad Safari */
             -webkit-overflow-scrolling: touch;
         }
 
@@ -55,9 +54,8 @@
             border-radius: 8px;
         }
 
-        /* Marcador de palabras eliminado según la solicitud */
         .word.highlight {
-            /* No styles here to keep it invisible */
+            /* No visual style as requested */
         }
 
         .status-badge {
@@ -128,7 +126,7 @@
         let synth = window.speechSynthesis;
         let voices = [];
         let currentUtterance = null;
-        let lastBoundaryIndex = 0;
+        let lastWordTracked = 0;
 
         wordsArray.forEach((word, index) => {
             const span = document.createElement('span');
@@ -163,12 +161,13 @@
         function resumeOrStart() {
             if (currentWordIndex >= wordsArray.length) {
                 currentWordIndex = 0;
-                clearHighlights();
+                lastWordTracked = 0;
             }
             
             isPlaying = true;
             updateStatusUI(true);
 
+            // Hablar desde el índice actual
             const textToSpeak = wordsArray.slice(currentWordIndex).join(" ");
             currentUtterance = new SpeechSynthesisUtterance(textToSpeak);
             
@@ -186,16 +185,17 @@
             
             if (girlVoice) currentUtterance.voice = girlVoice;
 
-            let localWordCounter = 0;
+            let wordOffset = 0;
 
             currentUtterance.onboundary = (event) => {
                 if (event.name === 'word') {
-                    const globalIndex = currentWordIndex + localWordCounter;
+                    // Calculamos la posición real sumando el índice donde empezamos + las palabras procesadas en este tramo
+                    const globalIndex = currentWordIndex + wordOffset;
                     if (globalIndex < wordsArray.length) {
-                        highlightWord(globalIndex);
-                        lastBoundaryIndex = globalIndex;
+                        highlightAndScroll(globalIndex);
+                        lastWordTracked = globalIndex;
                     }
-                    localWordCounter++;
+                    wordOffset++;
                 }
             };
 
@@ -212,9 +212,9 @@
         function pauseReading() {
             isPlaying = false;
             synth.cancel(); 
-            currentWordIndex = lastBoundaryIndex + 1;
+            // Guardamos la siguiente palabra como punto de inicio para la reanudación
+            currentWordIndex = lastWordTracked + 1;
             updateStatusUI(false);
-            highlightWord(lastBoundaryIndex);
         }
 
         function updateStatusUI(playing) {
@@ -233,11 +233,10 @@
             }
         }
 
-        function highlightWord(index) {
-            clearHighlights();
+        function highlightAndScroll(index) {
             const wordSpan = document.getElementById(`word-${index}`);
             if (wordSpan) {
-                // Ya no añadimos la clase visual, pero mantenemos la lógica de scroll
+                // Lógica de scroll invisible
                 const cardRect = mainCard.getBoundingClientRect();
                 const wordRect = wordSpan.getBoundingClientRect();
                 const relativeTop = wordRect.top - cardRect.top + mainCard.scrollTop;
@@ -247,12 +246,6 @@
                     behavior: 'auto'
                 });
             }
-        }
-
-        function clearHighlights() {
-            document.querySelectorAll('.word').forEach(el => {
-                el.classList.remove('highlight');
-            });
         }
 
         function finishReading() {
@@ -270,8 +263,7 @@
             if(e) e.stopPropagation();
             document.getElementById('repeat-modal').classList.add('hidden');
             currentWordIndex = 0;
-            lastBoundaryIndex = 0;
-            clearHighlights();
+            lastWordTracked = 0;
             resumeOrStart();
             mainCard.scrollTo({ top: 0 });
         }
