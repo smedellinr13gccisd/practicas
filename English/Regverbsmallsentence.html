@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Magic Dictation - English</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Lexend', sans-serif; 
+            touch-action: manipulation;
+            background-color: #f0f9ff;
+        }
+        .blue-gradient {
+            background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .input-box {
+            border: 3px solid #bfdbfe;
+            transition: all 0.3s ease;
+        }
+        .input-box:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- App Container -->
+    <div id="game-card" class="w-full max-w-2xl bg-white rounded-3xl p-8 card-shadow relative overflow-hidden border-t-8 border-blue-600">
+        
+        <!-- Progress Bar -->
+        <div class="flex justify-between items-center mb-4">
+            <span id="progress-text" class="text-blue-600 font-bold text-sm">Oración 1 de 21</span>
+            <span class="text-xs text-blue-400 font-bold uppercase tracking-widest">Modo Aprendizaje</span>
+        </div>
+        <div class="w-full bg-blue-100 h-3 rounded-full mb-8">
+            <div id="progress-bar" class="bg-blue-600 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+
+        <!-- Main Display -->
+        <div class="text-center space-y-6">
+            <div id="emoji-display" class="text-8xl mb-4 transform transition-transform hover:scale-110 duration-300">🍇</div>
+            
+            <button id="btn-listen" class="blue-gradient text-white p-6 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all group">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+            </button>
+            
+            <p class="text-blue-500 font-bold tracking-wide uppercase text-sm">Escucha y escribe en presente</p>
+
+            <!-- Input Area -->
+            <div class="relative pt-4">
+                <input type="text" id="user-input" 
+                    class="input-box w-full p-5 rounded-2xl text-2xl text-center text-blue-900 font-bold" 
+                    placeholder="Escribe aquí..." autocomplete="off" autofocus>
+                
+                <div id="tip-container" class="mt-4 text-blue-400 font-medium h-6"></div>
+            </div>
+
+            <button id="btn-check" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-xl shadow-md transition-colors">
+                VERIFICAR ➔
+            </button>
+        </div>
+
+        <!-- Popups -->
+        <div id="feedback-popup" class="fixed inset-0 flex items-center justify-center z-50 pointer-events-none opacity-0 transition-opacity duration-300">
+            <div id="popup-content" class="bg-white border-4 p-8 rounded-3xl shadow-2xl text-center">
+                <h2 id="popup-title" class="text-3xl font-black mb-2"></h2>
+                <p id="popup-msg" class="text-lg font-bold text-gray-600"></p>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="fw-canvas" class="fixed inset-0 pointer-events-none z-40"></canvas>
+
+    <script>
+        const data = [
+            { en: "I like grapes.", es: "Me gustan las uvas.", emoji: "🍇" },
+            { en: "I open the door.", es: "Abro la puerta.", emoji: "🚪" },
+            { en: "I come to school.", es: "Vengo a la escuela.", emoji: "🏫" },
+            { en: "I learn to write.", es: "Aprendo a escribir.", emoji: "✍️" },
+            { en: "I talk to the teacher.", es: "Hablo con la maestra.", emoji: "👩‍🏫" },
+            { en: "I jump here.", es: "Yo salto aquí.", emoji: "🏃‍♂️" },
+            { en: "I walk to the class.", es: "Camino a la clase.", emoji: "🚶" },
+            { en: "I look around.", es: "Miro a mi alrededor.", emoji: "👀" },
+            { en: "I listen to my dad.", es: "Escucho a mi papá.", emoji: "👂" },
+            { en: "I ask my teacher.", es: "Le pregunto a mi maestro.", emoji: "🙋‍♂️" },
+            { en: "I answer the quiz.", es: "Respondo el examen.", emoji: "📝" },
+            { en: "I paint my house.", es: "Pinto mi casa.", emoji: "🎨" },
+            { en: "I color the page.", es: "Coloreo la página.", emoji: "🖍️" },
+            { en: "I clean my room.", es: "Limpio mi cuarto.", emoji: "🧹" },
+            { en: "I show my paper.", es: "Muestro mi papel.", emoji: "📄" },
+            { en: "I help the boy.", es: "Ayudo al niño.", emoji: "🤝" },
+            { en: "I love my mom.", es: "Amo a mi mamá.", emoji: "❤️" },
+            { en: "I smile a lot.", es: "Sonrío mucho.", emoji: "😊" },
+            { en: "I hug my mom.", es: "Abrazo a mi mamá.", emoji: "🫂" },
+            { en: "I wait in line.", es: "Espero en la fila.", emoji: "🧍‍♂️🧍‍♀️" },
+            { en: "I wash my hands.", es: "Lavo mis manos.", emoji: "🧼" }
+        ];
+
+        let currentIndex = 0;
+        let voices = [];
+        const synth = window.speechSynthesis;
+
+        const btnListen = document.getElementById('btn-listen');
+        const btnCheck = document.getElementById('btn-check');
+        const userInput = document.getElementById('user-input');
+        const tipContainer = document.getElementById('tip-container');
+        const emojiDisplay = document.getElementById('emoji-display');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const feedbackPopup = document.getElementById('feedback-popup');
+        const popupContent = document.getElementById('popup-content');
+        const popupTitle = document.getElementById('popup-title');
+        const popupMsg = document.getElementById('popup-msg');
+        const canvas = document.getElementById('fw-canvas');
+
+        function loadVoices() {
+            voices = synth.getVoices();
+        }
+        if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
+        loadVoices();
+
+        function getVoice(lang) {
+            const isEnglish = lang.startsWith('en');
+            if (isEnglish) {
+                return voices.find(v => v.lang.startsWith('en-US') && /girl|female|samantha|victoria|susan|soft/i.test(v.name.toLowerCase())) 
+                       || voices.find(v => v.lang.startsWith('en-US'));
+            }
+            return voices.find(v => v.lang.startsWith('es')) || voices[0];
+        }
+
+        async function playSandwichAudio() {
+            const item = data[currentIndex];
+            btnListen.disabled = true;
+            btnListen.classList.add('opacity-50');
+            
+            await speak(item.en, 'en-US', 0.85, 1.4); 
+            await new Promise(r => setTimeout(r, 600));
+            await speak(item.es, 'es-MX', 0.9, 1.0);  
+            await new Promise(r => setTimeout(r, 600));
+            await speak(item.en, 'en-US', 0.85, 1.4); 
+            
+            btnListen.disabled = false;
+            btnListen.classList.remove('opacity-50');
+            userInput.focus();
+        }
+
+        function speak(text, lang, rate, pitch) {
+            return new Promise((resolve) => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang;
+                utterance.rate = rate;
+                utterance.pitch = pitch;
+                utterance.voice = getVoice(lang);
+                utterance.onend = resolve;
+                synth.speak(utterance);
+            });
+        }
+
+        function playSuccessSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    osc.frequency.value = freq;
+                    g.gain.setValueAtTime(0.1, ctx.currentTime + i*0.1);
+                    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i*0.1 + 0.5);
+                    osc.connect(g);
+                    g.connect(ctx.destination);
+                    osc.start(ctx.currentTime + i*0.1);
+                    osc.stop(ctx.currentTime + i*0.1 + 0.5);
+                });
+            } catch(e) {}
+        }
+
+        function updateUI() {
+            const item = data[currentIndex];
+            emojiDisplay.innerText = item.emoji;
+            userInput.value = "";
+            tipContainer.innerText = "";
+            progressText.innerText = `Oración ${currentIndex + 1} de ${data.length}`;
+            progressBar.style.width = `${((currentIndex) / data.length) * 100}%`;
+            userInput.focus();
+        }
+
+        function showFeedback(type) {
+            feedbackPopup.style.opacity = "1";
+            feedbackPopup.classList.remove('pointer-events-none');
+            
+            if(type === 'success') {
+                popupContent.className = "bg-white border-green-500 border-4 p-8 rounded-3xl shadow-2xl text-center";
+                popupTitle.innerText = "¡Good Job! 🌟";
+                popupTitle.className = "text-3xl font-black mb-2 text-green-600";
+                popupMsg.innerText = "¡Excelente! Has escrito bien la oración.";
+                playSuccessSound();
+                launchFireworks();
+            } else {
+                popupContent.className = "bg-white border-blue-400 border-4 p-8 rounded-3xl shadow-2xl text-center";
+                popupTitle.innerText = "¡Vuelve a intentarlo! 💪";
+                popupTitle.className = "text-3xl font-black mb-2 text-blue-600";
+                popupMsg.innerText = "Mira la pista abajo y escucha de nuevo.";
+                document.getElementById('game-card').classList.add('shake');
+                setTimeout(() => document.getElementById('game-card').classList.remove('shake'), 500);
+            }
+
+            setTimeout(() => {
+                feedbackPopup.style.opacity = "0";
+                feedbackPopup.classList.add('pointer-events-none');
+            }, 2000);
+        }
+
+        function checkAnswer() {
+            const userText = userInput.value.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            const targetText = data[currentIndex].en.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
+
+            if (userText === targetText) {
+                showFeedback('success');
+                setTimeout(() => {
+                    currentIndex++;
+                    if (currentIndex < data.length) {
+                        updateUI();
+                    } else {
+                        progressBar.style.width = "100%";
+                        alert("¡Felicidades! Has completado todo el dictado.");
+                        currentIndex = 0;
+                        updateUI();
+                    }
+                }, 2200);
+            } else {
+                showFeedback('error');
+                const originalTarget = data[currentIndex].en;
+                let tip = "Pista: ";
+                for(let i=0; i < originalTarget.length; i++) {
+                    if (userInput.value[i] && userInput.value[i].toLowerCase() === originalTarget[i].toLowerCase()) {
+                        tip += originalTarget[i];
+                    } else {
+                        tip += "_ ";
+                        if (originalTarget[i] === " ") tip += " "; 
+                        break;
+                    }
+                }
+                tipContainer.innerText = tip;
+            }
+        }
+
+        let particles = [];
+        function launchFireworks() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            for(let i=0; i<100; i++) {
+                particles.push({
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 0.5) * 15,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    life: 1
+                });
+            }
+            animateFw();
+        }
+
+        function animateFw() {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.02;
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4, 0, Math.PI*2);
+                ctx.fill();
+            });
+            if(particles.length > 0) requestAnimationFrame(animateFw);
+        }
+
+        btnListen.onclick = playSandwichAudio;
+        btnCheck.onclick = checkAnswer;
+        userInput.onkeypress = (e) => { if(e.key === 'Enter') checkAnswer(); };
+
+        window.onload = updateUI;
+    </script>
+</body>
+</html>
