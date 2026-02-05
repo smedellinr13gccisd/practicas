@@ -10,24 +10,43 @@
         
         body {
             font-family: 'Quicksand', sans-serif;
-            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+            /* Colores más vibrantes en el fondo */
+            background: linear-gradient(135deg, #bae6fd 0%, #ede9fe 100%);
             color: #1e293b;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
             padding: 20px;
-            overflow-x: hidden;
+            overflow: hidden;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
+            position: relative;
+        }
+
+        /* Figuras de fondo más notorias */
+        .shape-bg {
+            position: fixed;
+            z-index: -1;
+            opacity: 0.25; /* Mayor opacidad para que se noten más */
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
+            pointer-events: none;
+            animation: floatShape 15s infinite ease-in-out;
+        }
+
+        @keyframes floatShape {
+            0% { transform: translateY(0) rotate(0deg) scale(1); }
+            50% { transform: translateY(-40px) rotate(180deg) scale(1.1); }
+            100% { transform: translateY(0) rotate(360deg) scale(1); }
         }
 
         .game-card {
-            background: white;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
             border-radius: 40px;
             padding: 2rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            border: 8px solid #38bdf8;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            border: 8px solid #0ea5e9; /* Borde más intenso */
             max-width: 800px; 
             width: 95%;
             text-align: center;
@@ -39,34 +58,35 @@
         }
 
         .text-container {
-            font-size: 2rem;
+            font-size: 2.2rem; /* Texto un poco más grande */
             line-height: 2.2; 
             text-align: left;
             margin: 1.5rem 0;
-            color: #1e293b; 
-            font-weight: 600;
+            color: #0f172a; 
+            font-weight: 700;
         }
 
         .word {
             display: inline-block;
-            margin-right: 10px;
+            margin-right: 12px;
+            transition: color 0.2s;
         }
 
         .status-badge {
-            background-color: #fbbf24;
-            color: #92400e;
-            padding: 10px 30px;
-            border-radius: 20px;
+            background-color: #f59e0b;
+            color: white;
+            padding: 12px 35px;
+            border-radius: 25px;
             font-weight: 800;
             margin-bottom: 0.5rem;
             display: inline-block;
-            box-shadow: 0 4px 0 #b45309;
+            box-shadow: 0 6px 0 #b45309;
+            border: 3px solid #fff;
         }
 
         .reading-active {
-            background-color: #22c55e;
-            color: white;
-            box-shadow: 0 4px 0 #166534;
+            background-color: #10b981;
+            box-shadow: 0 6px 0 #065f46;
         }
 
         .game-card::-webkit-scrollbar {
@@ -76,18 +96,35 @@
 </head>
 <body onclick="handleGlobalClick(event)">
 
+    <!-- Figuras 2D de fondo con colores más vivos -->
+    <svg class="shape-bg" style="top: 5%; left: 8%; width: 150px;" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" fill="#38bdf8" />
+    </svg>
+    <svg class="shape-bg" style="top: 55%; left: 75%; width: 180px; animation-delay: -3s;" viewBox="0 0 100 100">
+        <rect x="10" y="10" width="80" height="80" rx="15" fill="#818cf8" />
+    </svg>
+    <svg class="shape-bg" style="top: 75%; left: 10%; width: 130px; animation-delay: -6s;" viewBox="0 0 100 100">
+        <polygon points="50,5 95,85 5,85" fill="#f472b6" />
+    </svg>
+    <svg class="shape-bg" style="top: 15%; left: 80%; width: 110px; animation-delay: -9s;" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" fill="#fbbf24" />
+    </svg>
+    <svg class="shape-bg" style="top: 40%; left: -5%; width: 100px; animation-delay: -12s;" viewBox="0 0 100 100">
+        <rect x="20" y="20" width="60" height="60" rx="10" transform="rotate(45 50 50)" fill="#2dd4bf" />
+    </svg>
+
     <div class="mt-4 mb-4 text-center">
-        <h1 class="text-4xl font-black text-sky-700 mb-1">🦸‍♂️ Math Superhero Reader 🦸‍♀️</h1>
-        <p class="text-lg text-sky-900 font-bold">Touch to Play/Pause! (iPad Optimized 🍎)</p>
+        <h1 class="text-5xl font-black text-sky-800 mb-1 drop-shadow-sm">🦸‍♂️ Math Superhero Reader 🦸‍♀️</h1>
+        <p class="text-xl text-sky-900 font-bold">Touch to Play/Pause! 🚀</p>
     </div>
 
     <div class="game-card" id="main-card">
-        <div class="flex justify-between items-center mb-4 sticky top-0 bg-white/95 z-20 py-2">
-            <span class="bg-sky-100 text-sky-700 px-5 py-2 rounded-xl font-black text-lg border-2 border-sky-200">
+        <div class="flex justify-between items-center mb-4 sticky top-0 bg-white/95 z-20 py-2 rounded-2xl px-4">
+            <span class="bg-sky-500 text-white px-6 py-2 rounded-2xl font-black text-xl shadow-md">
                 📖 Read: <span id="read-count">0</span>
             </span>
-            <div id="play-status" class="status-badge text-lg">
-                <span id="status-icon">▶️</span> <span id="status-text">Tap Screen</span>
+            <div id="play-status" class="status-badge text-xl">
+                <span id="status-icon">▶️</span> <span id="status-text">Tap to Start</span>
             </div>
         </div>
 
@@ -95,16 +132,17 @@
             <!-- Words injected here -->
         </div>
 
-        <div class="mt-4 text-slate-400 font-bold italic pb-6">
-            Enhanced Sync Logic for Safari (iOS).
+        <div class="mt-4 text-sky-400 font-bold italic pb-6">
+            Fixed Safari Sync • New 2D Shapes Background
         </div>
     </div>
 
-    <div id="repeat-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6" onclick="event.stopPropagation()">
-        <div class="bg-white p-8 rounded-[35px] shadow-2xl border-8 border-sky-400 text-center max-w-sm">
-            <h2 class="text-3xl font-black text-sky-600 mb-3">You did it! 🎊</h2>
-            <p class="text-xl font-bold text-slate-600 mb-6">Want to practice again?</p>
-            <button onclick="resetAndRead(event)" class="bg-sky-500 text-white px-8 py-3 rounded-full text-xl font-black shadow-[0_6px_0_#0369a1] active:translate-y-1">Yes! 🔄</button>
+    <!-- Modal de repetición -->
+    <div id="repeat-modal" class="hidden fixed inset-0 bg-sky-900/60 backdrop-blur-md z-50 flex items-center justify-center p-6" onclick="event.stopPropagation()">
+        <div class="bg-white p-10 rounded-[50px] shadow-2xl border-8 border-sky-400 text-center max-w-sm">
+            <h2 class="text-4xl font-black text-sky-600 mb-3">Amazing! 🎊</h2>
+            <p class="text-2xl font-bold text-slate-600 mb-8">You are a Shape Hero!</p>
+            <button onclick="resetAndRead(event)" class="bg-emerald-500 text-white px-10 py-4 rounded-full text-2xl font-black shadow-[0_8px_0_#065f46] active:translate-y-1 transition-all">Play Again 🔄</button>
         </div>
     </div>
 
@@ -121,8 +159,6 @@
         let synth = window.speechSynthesis;
         let voices = [];
         let currentUtterance = null;
-        
-        // Seguimiento estricto para evitar retrocesos en Safari
         let lastConfirmedIndex = 0;
 
         const wordRanges = [];
@@ -166,7 +202,6 @@
         }
 
         function resumeOrStart() {
-            // Aseguramos que nunca empiece antes de la última palabra escuchada
             if (currentWordIndex >= wordsArray.length) {
                 currentWordIndex = 0;
                 lastConfirmedIndex = 0;
@@ -175,7 +210,6 @@
             isPlaying = true;
             updateStatusUI(true);
 
-            // Cortamos el texto desde el punto exacto guardado
             const startChar = wordRanges[currentWordIndex].start;
             const textToSpeak = originalText.substring(startChar);
             
@@ -200,7 +234,6 @@
                     const wordMatch = wordRanges.find(r => absoluteCharIndex >= r.start && absoluteCharIndex < r.end + 1);
                     
                     if (wordMatch) {
-                        // Solo avanzamos, nunca retrocedemos el índice visual
                         if (wordMatch.index >= lastConfirmedIndex) {
                             lastConfirmedIndex = wordMatch.index;
                             currentWordIndex = wordMatch.index;
@@ -217,7 +250,6 @@
                 }
             };
 
-            // Safari a veces falla al iniciar si no cancelamos primero
             synth.cancel();
             setTimeout(() => {
                 if (isPlaying) synth.speak(currentUtterance);
@@ -226,13 +258,8 @@
 
         function pauseReading() {
             isPlaying = false;
-            // Guardamos el progreso ANTES de cancelar, porque el cancel en Safari limpia eventos
             synth.cancel(); 
-            
-            // Forzamos el salto a la siguiente palabra basándonos en nuestra variable local
-            // Esto es lo que garantiza que no se regrese 3-4 palabras
             currentWordIndex = lastConfirmedIndex + 1;
-            
             updateStatusUI(false);
         }
 
